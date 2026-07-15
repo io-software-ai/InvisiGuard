@@ -41,5 +41,7 @@ ENV FRONTEND_DIST=/app/frontend/dist RELOAD=0
 #   /app/backend/static/processed -> generated watermarked images
 
 EXPOSE 8000
-# Zeabur injects $PORT; shell form expands it. Falls back to 8000 locally.
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Exec form + env read in Python: main.py resolves PORT / WEB_PORT / 8000 itself,
+# so startup never depends on shell variable expansion (avoids the literal
+# "${WEB_PORT}" -> "not a valid integer" crash when the platform overrides CMD).
+CMD ["python", "main.py"]

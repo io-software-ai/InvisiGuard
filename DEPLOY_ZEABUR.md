@@ -80,6 +80,19 @@ at `https://invisiguard.iosoftware.ai/#developers` and Status at `./status.html`
 landing at your apex domain and the app where those links expect it (adjust the hrefs if your
 topology differs).
 
+## Troubleshooting
+
+**`Error: Invalid value for '--port': '${WEB_PORT}' is not a valid integer`** (container BackOff loop)
+The service was built by Zeabur's auto-detection (zbpack) as a plain Python app instead of the
+root `Dockerfile`, and its generated start command passes `${WEB_PORT}` without shell expansion.
+Fix either way:
+1. **Preferred:** Service Settings → set **Root Directory to the repo root** (`/`), clear any
+   custom start command, and redeploy so the root `Dockerfile` is used (this also builds and
+   serves the frontend same-origin).
+2. If you intentionally deploy only `backend/` via auto-detection: set the **custom start
+   command to `python main.py`** and add env `RELOAD=0`. `main.py` reads `PORT` / `WEB_PORT`
+   from the environment itself, so no shell expansion is needed.
+
 ## What the deploy relies on in code
 
 - Root `Dockerfile` + `.dockerignore` (added for this).

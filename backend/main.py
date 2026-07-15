@@ -67,7 +67,9 @@ else:
 
 if __name__ == "__main__":
     import uvicorn
-    # 本地開發預設 8000 + reload；部署（Zeabur 等）可用 PORT 覆寫、RELOAD=0 關閉熱重載。
-    port = int(os.environ.get("PORT", "8000"))
+    # 本地開發預設 8000 + reload；部署（Zeabur 等）以 PORT / WEB_PORT 覆寫、RELOAD=0 關閉熱重載。
+    # 用 Python 讀環境變數（而非 CLI 的 ${PORT} 展開），避免平台以非 shell 方式執行
+    # 啟動指令時變數不展開、uvicorn 收到字面字串 "${WEB_PORT}" 而崩潰的問題。
+    port = int(os.environ.get("PORT") or os.environ.get("WEB_PORT") or "8000")
     reload = os.environ.get("RELOAD", "1") != "0"
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=reload)
