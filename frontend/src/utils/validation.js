@@ -5,9 +5,14 @@
 
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
-const ALPHA_MIN = 0.1;
-const ALPHA_MAX = 5.0;
-const MAX_TEXT_LENGTH = 240;
+// UTF-8 位元組上限（中文字約佔 3 bytes），與後端 params.MAX_TEXT_BYTES 一致。
+// export 供 UI 元件共用，避免各處各寫一份而漂移。
+export const MAX_TEXT_BYTES = 92;
+// trustmark 軌把完整文字存伺服器登錄表（影像只嵌入短 ID），不受 92-byte 位元上限限制，
+// 但仍設一個寬鬆的字元數上限避免濫用。與後端 routes.MAX_REGISTRY_TEXT_CHARS 一致。
+export const MAX_REGISTRY_TEXT_CHARS = 2000;
+export const ENGINE_CLASSIC = 'classic';
+export const ENGINE_TRUSTMARK = 'trustmark';
 
 /**
  * Validate image file type and size
@@ -40,41 +45,41 @@ export function validateImageFile(file) {
 }
 
 /**
+ * Compute the UTF-8 byte length of a string (e.g. 中文字 each take 3 bytes)
+ * @param {string} text - The text to measure
+ * @returns {number} Number of UTF-8 bytes
+ */
+export function getUtf8ByteLength(text) {
+  return new TextEncoder().encode(text ?? '').length;
+}
+
+/**
  * Validate watermark text
  * @param {string} text - The text to validate
+ * @param {string} [engine='classic'] - 'classic' (92 UTF-8 bytes) or 'trustmark' (2000 chars, stored server-side)
  * @returns {{valid: boolean, error?: string}} Validation result
  */
-export function validateWatermarkText(text) {
+export function validateWatermarkText(text, engine = ENGINE_CLASSIC) {
   if (!text || text.trim().length === 0) {
     return { valid: false, error: 'Watermark text cannot be empty' };
   }
 
-  if (text.length > MAX_TEXT_LENGTH) {
-    return {
-      valid: false,
-      error: `Watermark text exceeds maximum length of ${MAX_TEXT_LENGTH} characters`
-    };
+  if (engine === ENGINE_TRUSTMARK) {
+    const charLength = text.trim().length;
+    if (charLength > MAX_REGISTRY_TEXT_CHARS) {
+      return {
+        valid: false,
+        error: `Watermark text exceeds maximum length of ${MAX_REGISTRY_TEXT_CHARS} characters (got ${charLength} chars)`
+      };
+    }
+    return { valid: true };
   }
 
-  return { valid: true };
-}
-
-/**
- * Validate alpha (strength) value
- * @param {number} alpha - The alpha value to validate
- * @returns {{valid: boolean, error?: string}} Validation result
- */
-export function validateAlpha(alpha) {
-  const alphaNum = Number(alpha);
-  
-  if (isNaN(alphaNum)) {
-    return { valid: false, error: 'Alpha value must be a number' };
-  }
-
-  if (alphaNum < ALPHA_MIN || alphaNum > ALPHA_MAX) {
+  const byteLength = getUtf8ByteLength(text);
+  if (byteLength > MAX_TEXT_BYTES) {
     return {
       valid: false,
-      error: `Alpha value must be between ${ALPHA_MIN} and ${ALPHA_MAX}. Got: ${alphaNum}`
+      error: `Watermark text exceeds maximum length of ${MAX_TEXT_BYTES} UTF-8 bytes (got ${byteLength} bytes)`
     };
   }
 
@@ -85,10 +90,10 @@ export function validateAlpha(alpha) {
  * Validate embed request (comprehensive check)
  * @param {File} file - Image file
  * @param {string} text - Watermark text
- * @param {number} alpha - Strength value
+ * @param {string} [engine='classic'] - 'classic' or 'trustmark'
  * @returns {{valid: boolean, errors: string[]}} Validation result with all errors
  */
-export function validateEmbedRequest(file, text, alpha) {
+export function validateEmbedRequest(file, text, engine = ENGINE_CLASSIC) {
   const errors = [];
 
   const fileValidation = validateImageFile(file);
@@ -96,14 +101,9 @@ export function validateEmbedRequest(file, text, alpha) {
     errors.push(fileValidation.error);
   }
 
-  const textValidation = validateWatermarkText(text);
+  const textValidation = validateWatermarkText(text, engine);
   if (!textValidation.valid) {
     errors.push(textValidation.error);
-  }
-
-  const alphaValidation = validateAlpha(alpha);
-  if (!alphaValidation.valid) {
-    errors.push(alphaValidation.error);
   }
 
   return {

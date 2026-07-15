@@ -1,229 +1,102 @@
+"""
+浮水印嵌入器 (CORE CONTRACT v2)
+
+演算法：DWT(level=2, haar) + 抖動 QIM（Quantization Index Modulation）+ 平鋪冗餘。
+
+- 彩圖只在 Y（亮度）通道嵌入，避免影響顏色。
+- LL2 子帶切成 32x32 係數的 tile，每個 tile 各嵌入一份完整的 1024-bit RS 封包
+  （平鋪冗餘：裁切後只要留下任一完整 tile 即可還原訊息）。
+- 位元 j 依金鑰派生的排列 perm 放在 tile 內攤平位置 perm[j]，
+  並以金鑰派生的抖動 dither[j] 做 QIM 偏移，錯誤金鑰無法解讀。
+"""
+
 import cv2
 import numpy as np
 import pywt
-from scipy.fftpack import dct, idct
-from .geometry import embed_synch_template, SynchTemplate
-from reedsolo import RSCodec
-from src.utils.logger import get_logger
 
-# T027: 演算法參數常數 - 必須與 extraction.py 中的參數一致
-WAVELET = 'haar'  # DWT使用的小波類型
-LEVEL = 1  # DWT分解層級
-BASE_DELTA = 10.0  # QIM量化步長基準 - 最終步長 delta = BASE_DELTA * alpha
-
-# Reed-Solomon 參數 - 為抗裁切而增強
-N_ECC_SYMBOLS = 30  # ECC（錯誤校正碼）符號的數量（可校正 N_ECC_SYMBOLS / 2 = 15 個錯誤）
-# 權衡：更多的ECC意味著更好的錯誤校正能力，但訊息容量會減少
-
-logger = get_logger(__name__)
+from .params import WAVELET, DWT_LEVEL, DELTA, TILE_COEFF, MIN_IMAGE_DIM, get_key
+from .exceptions import ImageTooSmallError
+from .packet import build_packet, packet_to_bits, derive_dither, derive_permutation
 
 
 class WatermarkEmbedder:
-    def __init__(self, block_size: int = 8):
-        self.block_size = block_size
-        
-        # 初始化Reed-Solomon編碼器
-        self.rsc = RSCodec(N_ECC_SYMBOLS)
+    """DWT-QIM 浮水印嵌入器。"""
 
-    def generate_log_mask(self, image_gray: np.ndarray, base_alpha: float = 1.0) -> np.ndarray:
-        # (原始方法未變)
-        blurred = cv2.GaussianBlur(image_gray, (3, 3), 0)
-        laplacian = cv2.Laplacian(blurred, cv2.CV_64F)
-        laplacian = np.abs(laplacian)
-        mask = cv2.normalize(laplacian, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
-        k = 2.0
-        alpha_map = base_alpha * (1 + k * mask)
-        return alpha_map
+    def embed(self, image: np.ndarray, text: str, key: bytes = None, delta: float = None) -> np.ndarray:
+        """
+        將文字浮水印嵌入影像。
 
-    def _dct2(self, block):
-        return dct(dct(block.T, norm='ortho').T, norm='ortho')
+        image: BGR uint8（或灰階）；回傳同尺寸、同通道數的 uint8 影像。
+        丟出 MessageTooLongError（訊息過長）/ ImageTooSmallError（影像過小）。
+        """
+        # 用 is None 而非 falsy 判斷：呼叫端明確傳 key=b"" 應被尊重（雖不建議），
+        # 不可靜默退回公開的 DEFAULT_KEY；delta=0 同理應由下游數學暴露問題而非被吞。
+        key = get_key() if key is None else key
+        delta = float(DELTA if delta is None else delta)
 
-    def _idct2(self, block):
-        return idct(idct(block.T, norm='ortho').T, norm='ortho')
+        if image is None or image.ndim not in (2, 3):
+            raise ValueError("影像必須是 2 維灰階或 3 維 BGR 陣列")
 
-    def text_to_bits(self, text: str) -> list[int]:
-        """將字串轉換為位元列表，包含標頭、長度、和Reed-Solomon錯誤校正碼。"""
-        # --- 1. 構建負載 ---
-        # 負載是用戶訊息和一些額外資訊的組合，以確保可以正確提取它。
-
-        # "INV" 是一個標頭，用於識別我們的浮水印。
-        header = "INV"
-        length = len(text)
-        
-        # Reed-Solomon編碼器處理固定大小的數據塊。我們的是255字節。
-        # 一部分塊用於錯誤校正，剩下的是數據。
-        max_data_len = 255 - N_ECC_SYMBOLS
-        
-        # 3 Byte 放標頭(INV); 1 Byte 放長度。
-        max_text_len = max_data_len - 4
-        if length > max_text_len:
-            raise ValueError(f"文本太長 (當前Reed-Solomon配置最大支持 {max_text_len} 個字符)")
-            
-        # 組合負載：標頭 + 長度 + 文本
-        payload_str = header + chr(length) + text
-        data = bytearray(payload_str, 'utf-8')
-        
-        # --- 2. 填充和編碼 ---
-        # 用空字節填充數據，使其達到固定大小 (225 bits)。
-        # 這確保了即使訊息很短，整個數據塊的大小也是一致的。
-        padded_data = data + b'\0' * (max_data_len - len(data))
-
-        # 使用 Reed-Solomon 對數據進行編碼。
-        # 這會將 30 個 ECC 字節附加到數據的末尾，總共產生 255 字節的數據包。
-        # 這些 ECC 字節可以修復在提取過程中可能發生的錯誤。
-        packet = self.rsc.encode(padded_data)
-        
-        logger.debug(f"[Embed] 原始文本: '{text}', 長度: {length}")
-        logger.debug(f"[Embed] 負載 (前20字節): {list(packet[:20])}")
-        
-        # --- 轉換為位元 ---
-        # 將 255 bit 的數據包轉換為 Byte (255 * 8 = 2040 位元)。
-        # 每個位元都將嵌入到圖像的一個係數中。
-        encoded_bits = []
-        for byte in packet:
-            binval = bin(byte)[2:].rjust(8, '0')
-            encoded_bits.extend([int(b) for b in binval])
-        return encoded_bits
-
-    def embed_watermark_dwt_qim(self, image: np.ndarray, text: str, alpha: float = 1.0) -> np.ndarray:
-        """使用DWT和QIM嵌入浮水印。"""
-        
-        # 計算實際的量化步長
-        delta = BASE_DELTA * alpha
-        logger.debug(f"[Embed] 參數: WAVELET={WAVELET}, LEVEL={LEVEL}, BASE_DELTA={BASE_DELTA}, alpha={alpha}, delta={delta}")
-        
-        # --- 1. 圖像預處理 ---
-        # 如果圖像有顏色，我們將其轉換為 YUV 色彩空間。
-        # Y 通道代表亮度（黑白），U和V代表色度，只在 Y 通道中嵌入浮水印，避免影響顏色。
-        if len(image.shape) == 3:
-            yuv = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
-            y_channel = yuv[:, :, 0].astype(float)
-        else: # 如果圖像已經是灰階
-            y_channel = image.astype(float)
-        
-        original_y_shape = y_channel.shape
-        
-        # 準備位元流，將要嵌入的文本轉換為包含錯誤校正碼的位元流。
-        bits = self.text_to_bits(text)
-        
-        # --- 離散小波變換 (DWT) ---
-        # DWT 將圖像分解為不同的頻率分量。
-        # 我們使用 'haar' 小波，因為它簡單且高效。
-        # 分解產生四個子帶：
-            # LL: 低頻（圖像的主要結構）
-            # LH, HL, HH: 高頻（邊緣和紋理）
-        # 我們將浮水印嵌入到LL子帶中，因為它對圖像質量的影響最小，並且對壓縮等攻擊最不敏感。
-        coeffs = pywt.dwt2(y_channel, WAVELET)
-        LL, (LH, HL, HH) = coeffs
-        
-        logger.debug(f"[Embed] LL子帶形狀: {LL.shape}, 總容量: {LL.shape[0] * LL.shape[1]} 位元")
-        logger.debug(f"[Embed] QIM前LL子帶的最小/最大值: {LL.min():.2f}/{LL.max():.2f}")
-        logger.debug(f"[Embed] 嵌入 {len(bits)} 位元, 前50位: {bits[:50]}")
-        
-        ll_flat = LL.flatten()
-        
-        if len(bits) > len(ll_flat):
-            raise ValueError("圖像空間不足以嵌入浮水印。")
-        
-        # --- 量化索引調變 (QIM) ---
-        # QIM 是一種通過修改係數的量化值來嵌入數據的技術。
-        # 使用係數的奇偶性來代表0或1。
-        # 我們將浮水印順序嵌入到圖像的左上角區域，這種策略有助於抵抗從圖像底部或右側的裁切。
-        logger.debug(f"[Embed] 使用順序嵌入 (位置 0-{len(bits)-1})")
-        for i in range(len(bits)):
-            c = ll_flat[i]  # 獲取一個LL係數
-            b = bits[i]     # 獲取要嵌入的位元 (0 或 1)
-            
-            # 將係數除以delta並四捨五入，得到量化索引q。
-            q = round(c / delta)
-            
-            # 根據要嵌入的位元調整q的奇偶性。
-            # 如果位元是0，q必須是偶數。
-            # 如果位元是1，q必須是奇數。
-            if b == 0 and q % 2 != 0:
-                q -= 1
-            elif b == 1 and q % 2 == 0:
-                q += 1
-            
-            # 用新的q重新計算係數，從而嵌入位元。
-            ll_flat[i] = q * delta
-            
-        LL_w = ll_flat.reshape(LL.shape)
-        
-        logger.debug(f"[Embed] QIM後LL_w的最小/最大值: {LL_w.min():.2f}/{LL_w.max():.2f}")
-        
-        # --- 重建圖像 ---
-        # 使用修改後的LL子帶和原始的LH, HL, HH子帶進行逆 DWT，重建帶有浮水印的Y通道。
-        coeffs_w = (LL_w, (LH, HL, HH))
-        y_channel_w = pywt.idwt2(coeffs_w, WAVELET)
-        
-        # 有時 IDWT 後的尺寸會因舍入而有1個像素的差異 -> 需要確保其尺寸與原始 Y 通道完全相同。
-        if y_channel_w.shape != original_y_shape:
-            logger.warning(f"[Embed] IDWT尺寸不匹配！得到 {y_channel_w.shape}, 期望 {original_y_shape}")
-            y_channel_w = y_channel_w[:original_y_shape[0], :original_y_shape[1]]
-        
-        # 將 Y 通道的值裁剪到 0-255 範圍並轉換為 8 位無符號整數。
-        processed_y = np.clip(y_channel_w, 0, 255).astype(np.uint8)
-        
-        # 如果原始圖像是彩色的，將修改後的 Y 通道與原始 U, V 通道合併。
-        if len(image.shape) == 3:
-            yuv[:, :, 0] = processed_y
-            watermarked = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR)
-        else: # 否則，直接使用修改後的Y通道。
-            watermarked = processed_y
-        
-        logger.info(f"[Embed] 成功嵌入 {len(bits)} 位元到圖像中")
-            
-        return watermarked
-
-    def embed_watermark_dct(self, image: np.ndarray, text: str, alpha: float = 1.0) -> np.ndarray:
-        """Original DCT-based embedding method."""
         h, w = image.shape[:2]
-        
-        if len(image.shape) == 3:
-            yuv = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
-            y_channel = yuv[:, :, 0].astype(float)
-        else:
-            y_channel = image.astype(float)
-            
-        mask = self.generate_log_mask(y_channel, base_alpha=alpha)
-        bits = self.text_to_bits(text)
-        num_bits = len(bits)
-        bit_idx = 0
-        processed_y = y_channel.copy()
-        
-        for i in range(0, h - self.block_size + 1, self.block_size):
-            for j in range(0, w - self.block_size + 1, self.block_size):
-                if bit_idx >= num_bits: break
-                block = processed_y[i:i+self.block_size, j:j+self.block_size]
-                dct_block = self._dct2(block)
-                local_alpha = mask[i + self.block_size//2, j + self.block_size//2]
-                c1_idx, c2_idx = (3, 1), (1, 3)
-                c1, c2 = dct_block[c1_idx], dct_block[c2_idx]
-                base_strength = 2.0
-                gap = (base_strength * alpha) + (local_alpha * 5.0 * alpha)
-                bit = bits[bit_idx]
-                if bit == 1:
-                    if c1 <= c2 + gap:
-                        diff = (c2 + gap - c1) / 2.0
-                        dct_block[c1_idx] += diff
-                        dct_block[c2_idx] -= diff
-                else:
-                    if c2 <= c1 + gap:
-                        diff = (c1 + gap - c2) / 2.0
-                        dct_block[c2_idx] += diff
-                        dct_block[c1_idx] -= diff
-                processed_y[i:i+self.block_size, j:j+self.block_size] = self._idct2(dct_block)
-                bit_idx += 1
-            if bit_idx >= num_bits: break
+        if h < MIN_IMAGE_DIM or w < MIN_IMAGE_DIM:
+            raise ImageTooSmallError(
+                f"影像尺寸 {w}x{h} 小於最小需求 {MIN_IMAGE_DIM}x{MIN_IMAGE_DIM}"
+            )
 
-        processed_y = np.clip(processed_y, 0, 255).astype(np.uint8)
-        if len(image.shape) == 3:
-            yuv[:, :, 0] = processed_y
-            watermarked = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR)
+        # --- 1. 取 Y 通道（float64）---
+        is_color = image.ndim == 3
+        if is_color:
+            yuv = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
+            y_channel = yuv[:, :, 0].astype(np.float64)
         else:
-            watermarked = processed_y
-            
-        template = SynchTemplate()
-        watermarked = embed_synch_template(watermarked, template)
-        return watermarked
+            y_channel = image.astype(np.float64)
+
+        # --- 2. 準備位元流與金鑰材料 ---
+        n_bits = TILE_COEFF * TILE_COEFF  # 1024
+        bits = packet_to_bits(build_packet(text))
+        perm = derive_permutation(key, n_bits)
+        dither = derive_dither(key, n_bits, delta)
+
+        # 位元 j 放在 tile 內攤平位置 perm[j]：
+        # 依「位置」排列的 QIM 偏移 = dither[j] + bits[j] * delta/2
+        offset_at_pos = np.empty(n_bits, dtype=np.float64)
+        offset_at_pos[perm] = dither + bits * (delta / 2.0)
+
+        # --- 3. DWT 分解取 LL2 ---
+        coeffs = pywt.wavedec2(y_channel, WAVELET, level=DWT_LEVEL)
+        ll2 = coeffs[0]
+
+        # --- 4. 檢查可容納的完整 tile 數 ---
+        n_ty = ll2.shape[0] // TILE_COEFF
+        n_tx = ll2.shape[1] // TILE_COEFF
+        if n_ty == 0 or n_tx == 0:
+            raise ImageTooSmallError(
+                f"LL2 子帶 {ll2.shape[1]}x{ll2.shape[0]} 無法容納完整的 {TILE_COEFF}x{TILE_COEFF} tile"
+            )
+
+        # --- 5. 抖動 QIM 嵌入（全 tile 向量化，所有 tile 嵌入相同封包）---
+        region_h, region_w = n_ty * TILE_COEFF, n_tx * TILE_COEFF
+        tiles = (
+            ll2[:region_h, :region_w]
+            .reshape(n_ty, TILE_COEFF, n_tx, TILE_COEFF)
+            .transpose(0, 2, 1, 3)
+            .reshape(-1, n_bits)
+        )
+        # q = round((c - offset)/delta); c_new = q*delta + offset
+        q = np.round((tiles - offset_at_pos) / delta)
+        tiles = q * delta + offset_at_pos
+        ll2[:region_h, :region_w] = (
+            tiles.reshape(n_ty, n_tx, TILE_COEFF, TILE_COEFF)
+            .transpose(0, 2, 1, 3)
+            .reshape(region_h, region_w)
+        )
+        coeffs[0] = ll2
+
+        # --- 6. 逆變換重建，裁回原尺寸並合回色彩 ---
+        y_rec = pywt.waverec2(coeffs, WAVELET)[:h, :w]
+        y_rec = np.clip(np.round(y_rec), 0, 255).astype(np.uint8)
+
+        if is_color:
+            yuv[:, :, 0] = y_rec
+            return cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR)
+        return y_rec

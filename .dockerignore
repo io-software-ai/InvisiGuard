@@ -1,0 +1,19 @@
+# Keep the build context small and reproducible.
+**/node_modules
+**/.venv
+**/venv
+**/__pycache__
+**/*.pyc
+frontend/dist
+backend/data
+backend/static/processed
+backend/static/debug
+**/.pytest_cache
+.git
+.github
+spec
+test
+invisiguard-landing
+fluxrelay-landing
+cli
+*.md

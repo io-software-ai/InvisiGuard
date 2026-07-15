@@ -1,0 +1,515 @@
+<!doctype html>
+<!-- InvisiGuard landing page, a product of io Software. Deploy target: https://invisiguard.iosoftware.ai -->
+<html lang="en" data-theme="dark" data-lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <!-- Primary SEO -->
+  <title>InvisiGuard | Invisible Watermarking &amp; Content Authenticity | io Software</title>
+  <meta name="description" content="InvisiGuard embeds an invisible, tamper-resistant watermark with two engines, then issues a real robustness certificate proving your image survives JPEG, resizing, and cropping. A product of io Software.">
+  <meta name="keywords" content="invisible watermarking, image watermark, content authenticity, robustness certificate, DWT QIM, TrustMark, keyed watermark, tamper-evident, provenance, Digimarc alternative, SynthID alternative, io Software, InvisiGuard">
+  <meta name="author" content="io Software">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://invisiguard.iosoftware.ai/">
+  <meta name="theme-color" content="#0a0e16" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f6f8fb" media="(prefers-color-scheme: light)">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563eb'/%3E%3Cpath d='M16 6l6 2.4v5.6c0 4.2-3.4 6.8-6 7.7-2.6-.9-6-3.5-6-7.7V8.4z' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M12.8 15.6l2.4 2.4 4-4.4' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="InvisiGuard">
+  <meta property="og:title" content="InvisiGuard | Invisible Marks, Provable Ownership">
+  <meta property="og:description" content="Embed an invisible, tamper-resistant watermark, then prove it survives JPEG, resizing, and cropping with a real robustness certificate.">
+  <meta property="og:url" content="https://invisiguard.iosoftware.ai/">
+  <meta property="og:image" content="https://invisiguard.iosoftware.ai/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="InvisiGuard Invisible Watermarking and Content Authenticity. Invisible Marks, Provable Ownership.">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="zh_TW">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="InvisiGuard | Invisible Marks, Provable Ownership">
+  <meta name="twitter:description" content="Invisible, tamper-resistant image watermarking with a real, measured robustness certificate. A product of io Software.">
+  <meta name="twitter:image" content="https://invisiguard.iosoftware.ai/og-image.png">
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      { "@type": "Organization", "@id": "https://invisiguard.iosoftware.ai/#iosoftware", "name": "io Software", "url": "https://iosoftware.ai/", "logo": "https://invisiguard.iosoftware.ai/logo_black_rect.svg" },
+      { "@type": "SoftwareApplication", "name": "InvisiGuard", "applicationCategory": "MultimediaApplication", "operatingSystem": "Any",
+        "description": "Invisible, tamper-resistant image watermarking with dual engines and a measured robustness certificate.",
+        "url": "https://invisiguard.iosoftware.ai/", "publisher": { "@id": "https://invisiguard.iosoftware.ai/#iosoftware" },
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free tier available" } }
+    ]
+  }
+  </script>
+
+  <!-- Set theme + language before paint (honors OS preference when unset) -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('ig-theme');
+        if (t !== 'dark' && t !== 'light') { t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+        document.documentElement.setAttribute('data-theme', t);
+        var l = localStorage.getItem('ig-lang');
+        if (l !== 'zh' && l !== 'en') { l = (navigator.language || 'en').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en'; }
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.lang = (l === 'zh' ? 'zh-Hant' : 'en');
+      } catch (e) {}
+    })();
+  </script>
+
+  <style>
+    @font-face{font-family:'Geist Variable';src:url('./fonts/geist-sans.woff2') format('woff2-variations');font-weight:100 900;font-style:normal;font-display:swap;}
+    @font-face{font-family:'Geist Mono Variable';src:url('./fonts/geist-mono.woff2') format('woff2-variations');font-weight:100 900;font-style:normal;font-display:swap;}
+
+    :root {
+      --bg:#0a0e16; --bg-2:#0f1622; --surface:#111826; --surface-2:#161f2e;
+      --text:#e9eef5; --muted:#8b97a8; --faint:#5f6b7c; --border:#1e2838; --border-2:#2a3548;
+      --accent:#3b82f6; --accent-2:#5b9bff; --accent-ink:#7dabff; --accent-sq:#2563eb;
+      --accent-soft:rgba(59,130,246,.13); --accent-line:rgba(59,130,246,.38);
+      --good:#35c07f; --warn:#e0a53a; --crit:#ef6a7a;
+      --r-btn:12px; --r-card:18px; --r-pill:999px;
+      --shadow-card:0 1px 2px rgba(2,6,23,.5), 0 10px 30px rgba(2,6,23,.42);
+      --shadow-card-hover:0 2px 6px rgba(2,6,23,.5), 0 22px 48px rgba(2,6,23,.55);
+      --shadow-accent:0 8px 22px rgba(37,99,235,.38);
+      --shadow-accent-sm:0 4px 12px rgba(37,99,235,.32);
+      --maxw:1140px;
+      --sans:'Geist Variable',system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue","Noto Sans TC","PingFang TC","Microsoft JhengHei",Arial,sans-serif;
+      --mono:'Geist Mono Variable',ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    }
+    :root[data-theme="light"] {
+      --bg:#f6f8fb; --bg-2:#eef2f8; --surface:#ffffff; --surface-2:#f2f5fa;
+      --text:#101722; --muted:#566072; --faint:#8a95a6; --border:#e3e8f1; --border-2:#d5dce8;
+      --accent:#2563eb; --accent-2:#3b82f6; --accent-ink:#1d4ed8; --accent-sq:#2563eb;
+      --accent-soft:rgba(37,99,235,.08); --accent-line:rgba(37,99,235,.3);
+      --good:#16a163; --warn:#b6801f; --crit:#d23f52;
+      --shadow-card:0 1px 2px rgba(15,23,42,.06), 0 10px 30px rgba(15,23,42,.08);
+      --shadow-card-hover:0 2px 6px rgba(15,23,42,.09), 0 22px 46px rgba(15,23,42,.13);
+      --shadow-accent:0 8px 22px rgba(37,99,235,.22);
+      --shadow-accent-sm:0 4px 12px rgba(37,99,235,.2);
+    }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; -webkit-text-size-adjust:100%; }
+    @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} *{animation:none!important;transition:none!important} }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans); font-size:17px; line-height:1.65; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; overflow-x:hidden;
+           -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none; }
+    img { -webkit-user-drag:none; -khtml-user-drag:none; -moz-user-drag:none; user-drag:none; pointer-events:none; }
+    .wrap { max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+    a { color:inherit; text-decoration:none; }
+    h1,h2,h3 { line-height:1.1; letter-spacing:-.025em; margin:0; text-wrap:balance; font-weight:800; }
+    p { margin:0; }
+    .eyebrow { display:inline-block; font-size:.76rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--accent-ink); }
+    .muted { color:var(--muted); }
+    :focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:6px; }
+
+    @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+
+    .btn { display:inline-flex; align-items:center; gap:8px; font-weight:650; font-size:.95rem; padding:12px 20px; border-radius:var(--r-btn); border:1px solid transparent; cursor:pointer; transition:transform .18s cubic-bezier(.2,.7,.2,1), background .18s, border-color .18s, box-shadow .18s; white-space:nowrap; }
+    .btn-primary { background:var(--accent); color:#fff; box-shadow:var(--shadow-accent-sm); }
+    .btn-primary:hover { background:var(--accent-2); transform:translateY(-1px); box-shadow:var(--shadow-accent); }
+    .btn-primary:active { transform:translateY(0) scale(.985); }
+    .btn-ghost { background:transparent; color:var(--text); border-color:var(--border-2); }
+    .btn-ghost:hover { border-color:var(--accent-line); color:var(--accent-ink); background:var(--accent-soft); }
+    .btn-ghost:active { transform:scale(.985); }
+    .icobtn { display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:var(--r-btn); border:1px solid var(--border-2); background:var(--surface); color:var(--text); cursor:pointer; transition:border-color .18s,color .18s,background .18s,transform .18s; }
+    .icobtn:hover { border-color:var(--accent-line); color:var(--accent-ink); background:var(--accent-soft); }
+    .icobtn:active { transform:scale(.94); }
+    .icobtn svg { width:18px; height:18px; }
+
+    header.site { position:sticky; top:0; z-index:50; background:color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter:saturate(160%) blur(14px); -webkit-backdrop-filter:saturate(160%) blur(14px); border-bottom:1px solid var(--border); }
+    .nav { display:flex; align-items:center; gap:20px; height:68px; }
+    .brand { display:inline-flex; align-items:center; gap:11px; font-weight:800; font-size:1.18rem; letter-spacing:-.03em; }
+    .brand .mark { width:34px; height:34px; border-radius:10px; background:var(--accent-sq); display:inline-flex; align-items:center; justify-content:center; box-shadow:var(--shadow-accent-sm); }
+    .brand .mark svg { width:20px; height:20px; }
+    .nav-links { display:flex; gap:26px; margin-left:14px; }
+    .nav-links a { font-size:.95rem; font-weight:550; color:var(--muted); transition:color .15s; }
+    .nav-links a:hover { color:var(--text); }
+    .nav-right { display:flex; align-items:center; gap:10px; margin-left:auto; }
+    .lang { font-weight:700; font-size:.8rem; min-width:46px; }
+    .theme-dark-only { display:none; } :root[data-theme="dark"] .theme-dark-only { display:inline-flex; }
+    .theme-light-only { display:none; } :root[data-theme="light"] .theme-light-only { display:inline-flex; }
+    .menu-btn { display:none; }
+    [data-i18n-lang] { display:none; }
+    :root[data-lang="en"] [data-i18n-lang="en"], :root[data-lang="zh"] [data-i18n-lang="zh"] { display:revert; }
+
+    .hero { position:relative; padding:104px 0 76px; overflow:hidden; }
+    .hero::before { content:""; position:absolute; inset:0; z-index:-1; background: radial-gradient(120% 80% at 88% -8%, var(--accent-soft) 0%, transparent 46%), linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 60%); }
+    .hero-grid { display:grid; grid-template-columns:1.05fr .95fr; gap:52px; align-items:center; }
+    .hero h1 { font-size:clamp(2.6rem,6vw,4.25rem); letter-spacing:-.038em; margin:20px 0 22px; }
+    .hero h1 .hl { color:var(--accent-ink); }
+    .hero .sub { font-size:clamp(1.05rem,1.5vw,1.22rem); color:var(--muted); max-width:46ch; }
+    .hero .actions { display:flex; flex-wrap:wrap; gap:12px; margin:30px 0 22px; }
+    .pill { display:inline-flex; align-items:center; gap:8px; font-size:.82rem; font-weight:700; padding:7px 15px; border-radius:var(--r-pill); border:1px solid var(--accent-line); color:var(--accent-ink); background:var(--accent-soft); }
+    .pill .dot { width:7px; height:7px; border-radius:var(--r-pill); background:var(--good); box-shadow:0 0 0 3px color-mix(in srgb, var(--good) 25%, transparent); }
+    .tags { display:flex; flex-wrap:wrap; gap:8px 10px; margin-top:22px; }
+    .tags span { font-size:.82rem; color:var(--muted); border:1px solid var(--border); border-radius:var(--r-btn); padding:5px 11px; background:var(--surface); transition:border-color .15s, color .15s; }
+    .tags span:hover { border-color:var(--accent-line); color:var(--text); }
+
+    /* Certificate hero card */
+    .cert { position:relative; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-card); box-shadow:var(--shadow-card); overflow:hidden; }
+    .cert .top { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border); background:color-mix(in srgb, var(--surface-2) 60%, transparent); }
+    .cert .top .t { font-weight:700; font-size:.95rem; letter-spacing:-.01em; }
+    .cert .top .t small { display:block; color:var(--faint); font-weight:500; font-size:.72rem; margin-top:2px; letter-spacing:0; }
+    .cert .score { font-family:var(--mono); font-variant-numeric:tabular-nums; font-weight:700; font-size:1.2rem; color:var(--text); }
+    .cert .rows { padding:8px 18px 14px; }
+    .cert .row { display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--border); font-size:.92rem; }
+    .cert .row:last-child { border-bottom:none; }
+    .cert .st { display:inline-flex; align-items:center; gap:7px; font-weight:700; font-size:.85rem; font-family:var(--mono); font-variant-numeric:tabular-nums; }
+    .cert .st::before { content:""; width:7px; height:7px; border-radius:var(--r-pill); background:currentColor; flex:none; }
+    .st-ok { color:var(--good); } .st-no { color:var(--faint); }
+    .cert .foot { padding:12px 18px; border-top:1px solid var(--border); color:var(--faint); font-size:.75rem; font-family:var(--mono); line-height:1.5; }
+
+    section { padding:96px 0; }
+    .sec-head { max-width:660px; margin-bottom:52px; }
+    .sec-head .eyebrow { margin-bottom:14px; }
+    .sec-head h2 { font-size:clamp(1.85rem,3.4vw,2.65rem); letter-spacing:-.03em; margin:0 0 14px; }
+    .sec-head p { color:var(--muted); font-size:1.08rem; max-width:62ch; }
+    .band { background:var(--bg-2); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+
+    .features { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-card); padding:26px; box-shadow:var(--shadow-card); transition:border-color .2s, transform .2s cubic-bezier(.2,.7,.2,1), box-shadow .2s; }
+    .card:hover { border-color:var(--accent-line); transform:translateY(-3px); box-shadow:var(--shadow-card-hover); }
+    .card .ico { width:44px; height:44px; border-radius:var(--r-btn); background:var(--accent-soft); color:var(--accent-ink); display:inline-flex; align-items:center; justify-content:center; margin-bottom:18px; border:1px solid var(--accent-line); }
+    .card .ico svg { width:22px; height:22px; }
+    .card h3 { font-size:1.16rem; margin-bottom:8px; font-weight:700; letter-spacing:-.02em; }
+    .card p { color:var(--muted); font-size:.95rem; max-width:60ch; }
+
+    .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; counter-reset:s; }
+    .step { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-card); padding:28px 26px; box-shadow:var(--shadow-card); transition:border-color .2s, box-shadow .2s; }
+    .step:hover { border-color:var(--accent-line); box-shadow:var(--shadow-card-hover); }
+    .step .n { counter-increment:s; font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:.82rem; font-weight:700; color:var(--accent-ink); width:34px; height:34px; border:1px solid var(--accent-line); border-radius:var(--r-btn); background:var(--accent-soft); display:inline-flex; align-items:center; justify-content:center; margin-bottom:16px; }
+    .step .n::before { content:"0" counter(s); }
+    .step h3 { font-size:1.08rem; margin-bottom:7px; font-weight:700; letter-spacing:-.02em; }
+    .step p { color:var(--muted); font-size:.94rem; }
+
+    .tablewrap { overflow-x:auto; border:1px solid var(--border); border-radius:var(--r-card); background:var(--surface); box-shadow:var(--shadow-card); }
+    table.cmp { border-collapse:collapse; width:100%; min-width:760px; font-size:.93rem; }
+    table.cmp th, table.cmp td { padding:15px 16px; text-align:left; border-bottom:1px solid var(--border); }
+    table.cmp thead th { font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; background:color-mix(in srgb, var(--surface-2) 55%, transparent); }
+    table.cmp thead th.own { color:var(--accent-ink); }
+    table.cmp td.c, table.cmp th.c { text-align:center; }
+    table.cmp tbody tr:hover td { background:color-mix(in srgb, var(--surface-2) 45%, transparent); }
+    table.cmp tbody tr:hover td.own { background:var(--accent-soft); }
+    table.cmp tbody tr:last-child td { border-bottom:none; }
+    table.cmp .own { background:var(--accent-soft); }
+    table.cmp td.feat { font-weight:600; color:var(--text); }
+    .yes { color:var(--good); font-weight:800; } .partial { color:var(--muted); font-weight:700; } .nope { color:var(--faint); }
+    .colnote { font-size:.8rem; color:var(--faint); margin-top:14px; max-width:82ch; line-height:1.55; }
+
+    .cta-band { text-align:center; }
+    .cta-band .wrap { max-width:760px; }
+    .cta-band h2 { font-size:clamp(1.9rem,4vw,2.85rem); letter-spacing:-.03em; margin-bottom:12px; }
+    .cta-band p { color:var(--muted); margin-bottom:28px; font-size:1.08rem; }
+
+    footer.site { border-top:1px solid var(--border); padding:56px 0 44px; background:var(--bg-2); }
+    .foot { display:flex; flex-wrap:wrap; gap:32px 48px; align-items:flex-start; justify-content:space-between; }
+    .foot .co { max-width:340px; }
+    .foot .co .co-logo { display:inline-block; margin-bottom:18px; opacity:.9; transition:opacity .15s ease; }
+    .foot .co .co-logo:hover { opacity:1; }
+    .foot .co .co-logo img { height:58px; width:auto; display:block; }
+    /* Wordmark art is light; on the light theme invert it to dark so it reads on the pale footer. */
+    :root[data-theme="light"] .foot .co .co-logo img { filter:invert(1) brightness(.92); }
+    .foot .co p { color:var(--muted); font-size:.9rem; }
+    .foot-links { display:flex; gap:48px; flex-wrap:wrap; }
+    .foot-col h4 { font-size:.76rem; text-transform:uppercase; letter-spacing:.12em; color:var(--faint); margin:0 0 12px; font-weight:700; }
+    .foot-col a { display:block; color:var(--muted); font-size:.92rem; padding:5px 0; transition:color .15s; }
+    .foot-col a:hover { color:var(--accent-ink); }
+    .copy { margin-top:40px; padding-top:22px; border-top:1px solid var(--border); color:var(--faint); font-size:.86rem; display:flex; flex-wrap:wrap; gap:8px 18px; justify-content:space-between; }
+    #mobile-menu { display:none; }
+
+    /* Entrance motion, gated on no-preference so reduced-motion keeps everything visible */
+    @media (prefers-reduced-motion: no-preference) {
+      .hero-grid > div > .eyebrow,
+      .hero h1, .hero .sub, .hero .actions, .hero .pill, .hero .tags, .cert {
+        opacity:0; animation:fadeUp .6s cubic-bezier(.22,.7,.24,1) both;
+      }
+      .hero h1 { animation-delay:.06s; }
+      .hero .sub { animation-delay:.12s; }
+      .hero .actions { animation-delay:.18s; }
+      .cert { animation-delay:.16s; }
+      .hero .pill { animation-delay:.24s; }
+      .hero .tags { animation-delay:.3s; }
+    }
+
+    @media (max-width:900px) {
+      .hero-grid { grid-template-columns:1fr; gap:38px; } .hero { padding:72px 0 52px; }
+      .features, .steps { grid-template-columns:1fr 1fr; }
+      .nav-links { display:none; } .menu-btn { display:inline-flex; }
+      #mobile-menu.open { display:block; } #mobile-menu { border-bottom:1px solid var(--border); background:var(--bg); }
+      #mobile-menu a { display:block; padding:14px 24px; font-weight:600; color:var(--text); border-top:1px solid var(--border); }
+      section { padding:76px 0; }
+    }
+    @media (max-width:560px) {
+      body { font-size:16px; } section { padding:56px 0; }
+      .features, .steps { grid-template-columns:1fr; } .foot { flex-direction:column; }
+      .hero .actions .btn { flex:1 1 auto; justify-content:center; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main" style="position:absolute;left:-9999px;top:0;background:var(--accent);color:#fff;padding:10px 16px;border-radius:8px;z-index:100" onfocus="this.style.left='12px'" onblur="this.style.left='-9999px'">
+    <span data-i18n-lang="en">Skip to content</span><span data-i18n-lang="zh">跳至主內容</span>
+  </a>
+
+  <header class="site">
+    <div class="wrap">
+      <nav class="nav" aria-label="Primary">
+        <a class="brand" href="#" aria-label="InvisiGuard home">
+          <span class="mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l7 2.5v5.5c0 4.4-3.4 7.1-7 8-3.6-.9-7-3.6-7-8V5.5z" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M8.7 12.2l2.3 2.3 4.3-4.6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <b>InvisiGuard</b>
+        </a>
+        <div class="nav-links">
+          <a href="#features"><span data-i18n-lang="en">Features</span><span data-i18n-lang="zh">功能</span></a>
+          <a href="#how"><span data-i18n-lang="en">How it works</span><span data-i18n-lang="zh">運作方式</span></a>
+          <a href="#compare"><span data-i18n-lang="en">Compare</span><span data-i18n-lang="zh">方案比較</span></a>
+          <a href="#docs"><span data-i18n-lang="en">Docs</span><span data-i18n-lang="zh">文件</span></a>
+        </div>
+        <div class="nav-right">
+          <button class="icobtn lang" id="lang-toggle" aria-label="Switch language"><span data-i18n-lang="en">中文</span><span data-i18n-lang="zh">EN</span></button>
+          <button class="icobtn" id="theme-toggle" aria-label="Toggle color theme">
+            <span class="theme-dark-only" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span>
+            <span class="theme-light-only" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span>
+          </button>
+          <a class="btn btn-primary" href="#docs" style="padding:9px 16px"><span data-i18n-lang="en">Get Started</span><span data-i18n-lang="zh">開始使用</span></a>
+          <button class="icobtn menu-btn" id="menu-btn" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+        </div>
+      </nav>
+    </div>
+    <div id="mobile-menu">
+      <a href="#features"><span data-i18n-lang="en">Features</span><span data-i18n-lang="zh">功能</span></a>
+      <a href="#how"><span data-i18n-lang="en">How it works</span><span data-i18n-lang="zh">運作方式</span></a>
+      <a href="#compare"><span data-i18n-lang="en">Compare</span><span data-i18n-lang="zh">方案比較</span></a>
+      <a href="#docs"><span data-i18n-lang="en">Docs</span><span data-i18n-lang="zh">文件</span></a>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <span class="eyebrow"><span data-i18n-lang="en">Invisible Watermarking &middot; Content Authenticity</span><span data-i18n-lang="zh">隱形浮水印 &middot; 內容真實性</span></span>
+          <h1>
+            <span data-i18n-lang="en">Invisible Marks,<br><span class="hl">Provable Ownership.</span></span>
+            <span data-i18n-lang="zh">隱形浮水印，<br><span class="hl">可驗證的所有權。</span></span>
+          </h1>
+          <p class="sub">
+            <span data-i18n-lang="en">Embed a tamper-resistant, invisible watermark with two engines, then get a real robustness certificate proving it survives JPEG, resizing, and cropping.</span>
+            <span data-i18n-lang="zh">用兩種引擎嵌入抗竄改的隱形浮水印，並附上一份實測報告，證明它在 JPEG 壓縮、縮放、裁切之後依然可辨識。</span>
+          </p>
+          <div class="actions">
+            <a class="btn btn-primary" href="#docs"><span data-i18n-lang="en">Protect an image</span><span data-i18n-lang="zh">保護一張圖片</span></a>
+            <a class="btn btn-ghost" href="#how"><span data-i18n-lang="en">See how it works</span><span data-i18n-lang="zh">看運作方式</span></a>
+          </div>
+          <span class="pill"><span class="dot" aria-hidden="true"></span><span data-i18n-lang="en">Robustness Certified</span><span data-i18n-lang="zh">通過穩健度實測</span></span>
+          <div class="tags">
+            <span data-i18n-lang="en">Dual-engine watermark</span><span data-i18n-lang="zh">雙引擎浮水印</span>
+            <span data-i18n-lang="en">Keyed anti-forgery</span><span data-i18n-lang="zh">金鑰防偽</span>
+            <span data-i18n-lang="en">Measured robustness certificate</span><span data-i18n-lang="zh">抗攻擊實測</span>
+            <span data-i18n-lang="en">Content provenance</span><span data-i18n-lang="zh">內容溯源</span>
+          </div>
+        </div>
+        <!-- Robustness certificate card (the product's differentiator, shown honestly) -->
+        <div class="cert" role="img" aria-label="Robustness certificate: measured survival per attack">
+          <div class="top">
+            <div class="t"><span data-i18n-lang="en">Robustness certificate</span><span data-i18n-lang="zh">穩健度實測報告</span><small><span data-i18n-lang="en">measured, not claimed</span><span data-i18n-lang="zh">實測結果，不是宣稱</span></small></div>
+            <div class="score">5<span style="color:var(--faint)">/6</span></div>
+          </div>
+          <div class="rows">
+            <div class="row"><span data-i18n-lang="en">JPEG q30 (heavy compression)</span><span data-i18n-lang="zh">JPEG q30（重壓縮）</span><span class="st st-ok"><span data-i18n-lang="en">survives</span><span data-i18n-lang="zh">留存</span></span></div>
+            <div class="row"><span data-i18n-lang="en">Downscale 50%</span><span data-i18n-lang="zh">縮放至 50%</span><span class="st st-ok"><span data-i18n-lang="en">survives</span><span data-i18n-lang="zh">留存</span></span></div>
+            <div class="row"><span data-i18n-lang="en">Crop 25%</span><span data-i18n-lang="zh">裁切 25%</span><span class="st st-ok"><span data-i18n-lang="en">survives</span><span data-i18n-lang="zh">留存</span></span></div>
+            <div class="row"><span data-i18n-lang="en">Gaussian noise</span><span data-i18n-lang="zh">高斯雜訊</span><span class="st st-ok"><span data-i18n-lang="en">survives</span><span data-i18n-lang="zh">留存</span></span></div>
+            <div class="row"><span data-i18n-lang="en">Rotation 5&deg;</span><span data-i18n-lang="zh">旋轉 5&deg;</span><span class="st st-no"><span data-i18n-lang="en">blind: fails</span><span data-i18n-lang="zh">盲偵測：失效</span></span></div>
+          </div>
+          <div class="foot"><span data-i18n-lang="en">Real attack battery on your image. Diffusion re-generation not claimed.</span><span data-i18n-lang="zh">對你的圖實際跑過多種攻擊測試；不宣稱能抵擋擴散模型重繪。</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features">
+      <div class="wrap">
+        <div class="sec-head">
+          <span class="eyebrow"><span data-i18n-lang="en">Capabilities</span><span data-i18n-lang="zh">核心能力</span></span>
+          <h2><span data-i18n-lang="en">Evidence, not dials.</span><span data-i18n-lang="zh">給你證據，而不是一堆看不懂的數字。</span></h2>
+          <p><span data-i18n-lang="en">Two complementary engines, a measured certificate, and keyed anti-forgery: the parts most tools leave you to stitch together yourself.</span><span data-i18n-lang="zh">兩種互補的引擎、一份實測報告，加上金鑰防偽：這些多半是別的工具要你自己拼湊的部分。</span></p>
+        </div>
+        <div class="features">
+          <article class="card">
+            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg></span>
+            <h3><span data-i18n-lang="en">Two engines, one API</span><span data-i18n-lang="zh">兩種引擎，一組 API</span></h3>
+            <p><span data-i18n-lang="en">A classic keyed engine for cropping resilience and high-capacity text, and a deep-learning engine for heavy JPEG and resizing. Pick per use case.</span><span data-i18n-lang="zh">經典金鑰引擎抗裁切、能嵌入大量文字；深度學習引擎抗重壓縮與縮放。依用途挑選即可。</span></p>
+          </article>
+          <article class="card">
+            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+            <h3><span data-i18n-lang="en">Measured robustness certificate</span><span data-i18n-lang="zh">穩健度實測報告</span></h3>
+            <p><span data-i18n-lang="en">On embed, we run a real attack battery on your image and show per-attack survival. Not a whitepaper claim, an on-screen result you can act on.</span><span data-i18n-lang="zh">嵌入時就對你的圖跑一輪真實攻擊測試，逐項顯示浮水印是否留存。不是白皮書上的說法，而是能據以決策的當場實測。</span></p>
+          </article>
+          <article class="card">
+            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+            <h3><span data-i18n-lang="en">Keyed &amp; tamper-resistant</span><span data-i18n-lang="zh">金鑰防偽，難以竄改</span></h3>
+            <p><span data-i18n-lang="en">The mark is derived from your secret key, so it can't be read, forged, or cleanly rewritten by anyone without it, unlike unkeyed AI labels.</span><span data-i18n-lang="zh">浮水印由你的金鑰產生，沒有金鑰就無法讀取、偽造或無痕竄改，這是無金鑰的 AI 標記做不到的。</span></p>
+          </article>
+          <article class="card">
+            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span>
+            <h3><span data-i18n-lang="en">Survives the real world</span><span data-i18n-lang="zh">撐得過真實通道</span></h3>
+            <p><span data-i18n-lang="en">Social-platform re-compression, downscaling, and cropping: between the two engines, the marks cover attacks a single method can't.</span><span data-i18n-lang="zh">社群平台重壓縮、縮放、裁切：兩種引擎聯手，涵蓋單一方法無法覆蓋的攻擊。</span></p>
+          </article>
+          <article class="card">
+            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg></span>
+            <h3><span data-i18n-lang="en">Embed-time self-check</span><span data-i18n-lang="zh">嵌入即自我檢查</span></h3>
+            <p><span data-i18n-lang="en">Every embed immediately re-reads the mark to confirm it's recoverable, so you never ship a watermark that can't be verified.</span><span data-i18n-lang="zh">每次嵌入立即回讀確認可還原，絕不會給你一個永遠驗證不出的浮水印。</span></p>
+          </article>
+          <article class="card">
+            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></span>
+            <h3><span data-i18n-lang="en">Carry text or an ID</span><span data-i18n-lang="zh">可帶文字或短 ID</span></h3>
+            <p><span data-i18n-lang="en">Embed up to 92 bytes of text directly in the pixels for offline proof, or a short ID that resolves to a server-side record. Your choice.</span><span data-i18n-lang="zh">可直接在像素中嵌入至多 92 bytes 文字供離線自證，或嵌入短 ID 反查伺服器記錄。由你決定。</span></p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section id="how" class="band">
+      <div class="wrap">
+        <div class="sec-head">
+          <span class="eyebrow"><span data-i18n-lang="en">How it works</span><span data-i18n-lang="zh">運作方式</span></span>
+          <h2><span data-i18n-lang="en">Protect, prove, verify.</span><span data-i18n-lang="zh">保護、證明、驗證。</span></h2>
+          <p><span data-i18n-lang="en">Three steps from an image to a certified, verifiable mark.</span><span data-i18n-lang="zh">三步，從一張圖到一個帶證書、可驗證的浮水印。</span></p>
+        </div>
+        <div class="steps">
+          <div class="step"><span class="n" aria-hidden="true"></span>
+            <h3><span data-i18n-lang="en">Choose by use case</span><span data-i18n-lang="zh">依用途選擇</span></h3>
+            <p><span data-i18n-lang="en">Copyright evidence and offline proof, or social-platform durability: we recommend the right engine automatically.</span><span data-i18n-lang="zh">版權存證與離線自證，或社群平台耐久，系統自動推薦合適的引擎。</span></p></div>
+          <div class="step"><span class="n" aria-hidden="true"></span>
+            <h3><span data-i18n-lang="en">Embed &amp; certify</span><span data-i18n-lang="zh">嵌入並認證</span></h3>
+            <p><span data-i18n-lang="en">The invisible mark goes in, a self-check confirms it, and a robustness certificate is measured on the spot.</span><span data-i18n-lang="zh">嵌入隱形浮水印、自我檢查確認可還原，並當場實測產生一份穩健度報告。</span></p></div>
+          <div class="step"><span class="n" aria-hidden="true"></span>
+            <h3><span data-i18n-lang="en">Verify anywhere</span><span data-i18n-lang="zh">隨處驗證</span></h3>
+            <p><span data-i18n-lang="en">Verify the mark blind, straight from the image, with no original needed. Ownership, proven.</span><span data-i18n-lang="zh">直接從圖片盲驗證，無需原圖。所有權，證明得了。</span></p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Compare -->
+    <section id="compare">
+      <div class="wrap">
+        <div class="sec-head">
+          <span class="eyebrow"><span data-i18n-lang="en">Why InvisiGuard</span><span data-i18n-lang="zh">為何選 InvisiGuard</span></span>
+          <h2><span data-i18n-lang="en">A more complete answer.</span><span data-i18n-lang="zh">更完整的解答。</span></h2>
+          <p><span data-i18n-lang="en">Enterprise tools are closed and quote-only; free AI labels are unkeyed and single-purpose. InvisiGuard is the middle no one occupies: two engines, keyed, self-serve, with the certificate none of them show.</span><span data-i18n-lang="zh">企業方案封閉、只能洽談報價；免費的 AI 標記無金鑰、又只能單一用途。InvisiGuard 正好站在沒人佔的中間地帶：雙引擎、金鑰防偽、可自助，還提供別人都沒有的實測報告。</span></p>
+        </div>
+        <div class="tablewrap">
+          <table class="cmp">
+            <thead>
+              <tr>
+                <th><span data-i18n-lang="en">Capability</span><span data-i18n-lang="zh">能力</span></th>
+                <th class="c own">InvisiGuard</th><th class="c">Digimarc</th><th class="c">Imatag</th><th class="c">SynthID</th><th class="c">TrustMark</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="feat"><span data-i18n-lang="en">On-screen measured robustness certificate</span><span data-i18n-lang="zh">當場實測的穩健度報告</span></td>
+                <td class="c own yes">&#9679;</td><td class="c nope">&#9675;</td><td class="c nope">&#9675;</td><td class="c nope">&#9675;</td><td class="c nope">&#9675;</td></tr>
+              <tr><td class="feat"><span data-i18n-lang="en">Keyed, non-forgeable mark</span><span data-i18n-lang="zh">金鑰防偽、不可偽造</span></td>
+                <td class="c own yes">&#9679;</td><td class="c partial">&#9680;</td><td class="c partial">&#9680;</td><td class="c nope">&#9675;</td><td class="c nope">&#9675;</td></tr>
+              <tr><td class="feat"><span data-i18n-lang="en">Dual engine (pick per use case)</span><span data-i18n-lang="zh">雙引擎（依用途選用）</span></td>
+                <td class="c own yes">&#9679;</td><td class="c nope">&#9675;</td><td class="c nope">&#9675;</td><td class="c nope">&#9675;</td><td class="c nope">&#9675;</td></tr>
+              <tr><td class="feat"><span data-i18n-lang="en">Survives cropping AND heavy JPEG/resize</span><span data-i18n-lang="zh">同時抗裁切與重壓縮/縮放</span></td>
+                <td class="c own yes">&#9679;</td><td class="c partial">&#9680;</td><td class="c partial">&#9680;</td><td class="c partial">&#9680;</td><td class="c partial">&#9680;</td></tr>
+              <tr><td class="feat"><span data-i18n-lang="en">Embed-time self-check</span><span data-i18n-lang="zh">嵌入即自我檢查</span></td>
+                <td class="c own yes">&#9679;</td><td class="c partial">?</td><td class="c partial">?</td><td class="c nope">&#9675;</td><td class="c nope">&#9675;</td></tr>
+              <tr><td class="feat"><span data-i18n-lang="en">Self-serve with a UI (not quote-only)</span><span data-i18n-lang="zh">可自助、有介面（非僅洽談）</span></td>
+                <td class="c own yes">&#9679;</td><td class="c nope">&#9675;</td><td class="c nope">&#9675;</td><td class="c partial">&#9680;</td><td class="c partial">&#9680;</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="colnote">
+          <span data-i18n-lang="en">&#9679; built-in &nbsp;&middot;&nbsp; &#9680; partial / closed &nbsp;&middot;&nbsp; &#9675; not offered &nbsp;&middot;&nbsp; ? not publicly documented. Based on publicly documented capabilities as of 2026; each competitor is strong in its focus. InvisiGuard's edge is combining all of the above and showing the evidence.</span>
+          <span data-i18n-lang="zh">&#9679; 內建 &nbsp;&middot;&nbsp; &#9680; 部分／封閉 &nbsp;&middot;&nbsp; &#9675; 未提供 &nbsp;&middot;&nbsp; ? 無公開文件。依 2026 年公開資料整理；各競品在其專長皆強。InvisiGuard 的優勢在於整合以上全部，並把證據攤開給你看。</span>
+        </p>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section id="docs" class="band cta-band">
+      <div class="wrap">
+        <h2><span data-i18n-lang="en">Prove it's yours.</span><span data-i18n-lang="zh">證明這是你的。</span></h2>
+        <p><span data-i18n-lang="en">Embed an invisible mark and get its robustness certificate in seconds.</span><span data-i18n-lang="zh">嵌入一個隱形浮水印，幾秒內就拿到它的穩健度實測報告。</span></p>
+        <a class="btn btn-primary" href="#" style="padding:14px 26px;font-size:1.02rem"><span data-i18n-lang="en">Get Started</span><span data-i18n-lang="zh">開始使用</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      <div class="foot">
+        <div class="co">
+          <a class="co-logo" href="https://iosoftware.ai" target="_blank" rel="noopener" aria-label="io Software">
+            <img src="./logo_io_wordmark.svg" alt="io Software" width="150" height="75">
+          </a>
+          <p><span data-i18n-lang="en">InvisiGuard is a product of io Software, maker of tools for content authenticity and ownership.</span><span data-i18n-lang="zh">InvisiGuard 為 io Software 出品，為內容真實性與所有權打造的工具。</span></p>
+        </div>
+        <div class="foot-links">
+          <div class="foot-col">
+            <h4><span data-i18n-lang="en">Product</span><span data-i18n-lang="zh">產品</span></h4>
+            <a href="#features"><span data-i18n-lang="en">Features</span><span data-i18n-lang="zh">功能</span></a>
+            <a href="#how"><span data-i18n-lang="en">How it works</span><span data-i18n-lang="zh">運作方式</span></a>
+            <a href="#compare"><span data-i18n-lang="en">Compare</span><span data-i18n-lang="zh">方案比較</span></a>
+          </div>
+          <div class="foot-col">
+            <h4><span data-i18n-lang="en">Developers</span><span data-i18n-lang="zh">開發者</span></h4>
+            <a href="https://invisiguard.iosoftware.ai/#developers" target="_blank" rel="noopener"><span data-i18n-lang="en">Documentation</span><span data-i18n-lang="zh">技術文件</span></a>
+            <a href="https://invisiguard.iosoftware.ai/#developers" target="_blank" rel="noopener"><span data-i18n-lang="en">API reference</span><span data-i18n-lang="zh">API 參考</span></a>
+            <a href="./status.html"><span data-i18n-lang="en">Status</span><span data-i18n-lang="zh">系統狀態</span></a>
+          </div>
+          <div class="foot-col">
+            <h4><span data-i18n-lang="en">Company</span><span data-i18n-lang="zh">公司</span></h4>
+            <a href="https://iosoftware.ai" target="_blank" rel="noopener"><span data-i18n-lang="en">About io Software</span><span data-i18n-lang="zh">關於 io Software</span></a>
+            <a href="https://iosoftware.ai/contact" target="_blank" rel="noopener"><span data-i18n-lang="en">Contact</span><span data-i18n-lang="zh">聯絡我們</span></a>
+            <a href="https://iosoftware.ai/privacy" target="_blank" rel="noopener"><span data-i18n-lang="en">Privacy</span><span data-i18n-lang="zh">隱私權政策</span></a>
+          </div>
+        </div>
+      </div>
+      <div class="copy">
+        <span>&copy; 2026 io Software. <span data-i18n-lang="en">All rights reserved.</span><span data-i18n-lang="zh">保留一切權利。</span></span>
+        <span data-i18n-lang="en">InvisiGuard and the InvisiGuard logo are trademarks of io Software.</span>
+        <span data-i18n-lang="zh">InvisiGuard 與 InvisiGuard 標誌為 io Software 之商標。</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      function applyTheme(t) { root.setAttribute('data-theme', t); }
+      document.getElementById('theme-toggle').addEventListener('click', function () {
+        var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        applyTheme(next); try { localStorage.setItem('ig-theme', next); } catch (e) {}
+      });
+      // Auto-detect: with no explicit choice, follow the OS live.
+      try {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
+          if (!localStorage.getItem('ig-theme')) { applyTheme(e.matches ? 'dark' : 'light'); }
+        });
+      } catch (e) {}
+      function applyLang(l) { root.setAttribute('data-lang', l); root.lang = (l === 'zh' ? 'zh-Hant' : 'en'); }
+      document.getElementById('lang-toggle').addEventListener('click', function () {
+        var next = root.getAttribute('data-lang') === 'zh' ? 'en' : 'zh';
+        applyLang(next); try { localStorage.setItem('ig-lang', next); } catch (e) {}
+      });
+      var mb = document.getElementById('menu-btn'), mm = document.getElementById('mobile-menu');
+      mb.addEventListener('click', function () { var open = mm.classList.toggle('open'); mb.setAttribute('aria-expanded', open ? 'true' : 'false'); });
+      mm.addEventListener('click', function (e) { if (e.target.closest('a')) { mm.classList.remove('open'); mb.setAttribute('aria-expanded', 'false'); } });
+    })();
+  </script>
+</body>
+</html>

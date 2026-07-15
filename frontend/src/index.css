@@ -7,17 +7,57 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
-  
+
   body {
-    @apply bg-slate-50 text-slate-900 font-sans;
+    @apply bg-slate-50 text-slate-900 font-sans antialiased dark:bg-slate-950 dark:text-slate-100;
+    font-feature-settings: "cv11", "ss01";
+    transition: background-color .25s ease, color .25s ease;
+  }
+
+  /* One consistent, visible focus ring for keyboard users across the whole app. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-blue-500/70 ring-offset-2 ring-offset-white dark:ring-offset-slate-950;
+  }
+
+  /* Blue-tinted selection to match the single locked accent. */
+  ::selection {
+    background-color: rgb(37 99 235 / 0.22);
+  }
+}
+
+@layer components {
+  /* Skeleton loader: shape-matching placeholder with a light sweep.
+     Use <div class="skeleton h-N w-N rounded-xl" /> instead of spinners. */
+  .skeleton {
+    @apply relative overflow-hidden bg-slate-200/70 dark:bg-slate-800/70;
+  }
+  .skeleton::after {
+    content: "";
+    @apply absolute inset-0 -translate-x-full;
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      rgb(255 255 255 / 0.45),
+      transparent
+    );
+    animation: shimmer 1.6s infinite;
+  }
+  .dark .skeleton::after {
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      rgb(255 255 255 / 0.06),
+      transparent
+    );
   }
 }
 
 /* Custom Scrollbar for Webkit */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -25,9 +65,21 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-300 rounded-full;
+  @apply bg-slate-300/80 rounded-full border-2 border-solid border-transparent bg-clip-content dark:bg-slate-700/80;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-400;
+  @apply bg-slate-400 dark:bg-slate-600;
+}
+
+/* Respect reduced-motion: collapse entrance/loop animations to instant. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -29,6 +29,8 @@ Thumbs.db
 # Project specific
 backend/static/processed/
 backend/static/debug/
+# 深度學習軌的浮水印登錄表（不對外服務，含使用者登錄文字）
+backend/data/
 
 # Exclude spec and test directories
 spec/

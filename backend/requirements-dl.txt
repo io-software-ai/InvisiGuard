@@ -1,0 +1,24 @@
+# 深度學習軌（TrustMark 引擎）額外相依。
+# 經典 DWT-QIM 軌不需要這些；只有要用 engine="trustmark" 時才安裝。
+#
+# Windows 安裝注意事項（實測 2026-07，Python 3.13 + torch 2.x）：
+#   1. trustmark 的 setup.py 在 cp1252 主控台讀 README 會崩潰，且它釘死了無 py3.13
+#      wheel 的舊 numpy。請用 UTF-8 模式 + --no-deps 安裝本體，再由本檔補齊相依：
+#
+#        set PYTHONUTF8=1                       (PowerShell: $env:PYTHONUTF8=1)
+#        pip install trustmark --no-deps
+#        pip install -r requirements-dl.txt
+#
+#   2. 首次執行 engine="trustmark" 會自動下載模型權重（encoder/decoder，一次性）。
+#   3. 預設使用 CPU（每次 encode/decode 約 0.1s）。若要用 GPU，另行安裝對應 CUDA
+#      版的 torch/torchvision（程式碼會自動偵測 torch.cuda.is_available()）。
+
+torch>=2.1
+torchvision>=0.16
+omegaconf>=2.3
+einops>=0.7
+lightning>=2.2
+Pillow>=9.0
+six>=1.9
+# trustmark 本體請以 --no-deps 安裝（見上方說明），避免它把 numpy 降級到無 py3.13 wheel 的舊版：
+#   pip install trustmark --no-deps

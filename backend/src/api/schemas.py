@@ -27,12 +27,18 @@ class WatermarkResponseData(BaseModel):
     signal_map_url: Optional[str] = None
     psnr: float
     ssim: float
+    engine: Optional[str] = None            # "classic" | "trustmark"
+    watermark_id: Optional[str] = None      # 僅 trustmark 軌回傳（登錄表短 ID）
+    # certify=true 時附上實測穩健性證書（攻擊電池逐項存活結果 + 分類燈號），
+    # 內容依情境而異，用彈性 Dict 承接。
+    robustness: Optional[Dict[str, Any]] = None
 
 class WatermarkResponse(BaseModel):
     status: str = "success"
     data: WatermarkResponseData
 
 class ExtractionDebugInfo(BaseModel):
+    status: Optional[str] = None  # aligned / unaligned_fallback / not_found
     aligned_image_url: Optional[str] = None
     matches_found: Optional[int] = None
 
@@ -46,16 +52,13 @@ class ExtractionResponse(BaseModel):
     status: str = "success"
     data: ExtractionResponseData
 
-class VerificationMetadata(BaseModel):
-    rotation_detected: float
-    scale_detected: float
-    geometry_corrected: bool
-
 class VerificationResponseData(BaseModel):
     verified: bool
     watermark_text: Optional[str]
     confidence: float
-    metadata: Optional[VerificationMetadata] = None
+    # v2: 擷取結果的 metadata 內容依情境而異（成功時含 phase/origin/tiles 等診斷欄位，
+    # 失敗時只有 method/note），改用彈性 Dict 承接，避免和 core 契約的欄位耦合過緊。
+    metadata: Optional[Dict[str, Any]] = None
 
 class VerificationResponse(BaseModel):
     status: str = "success"
