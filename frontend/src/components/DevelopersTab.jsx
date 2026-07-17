@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useLayoutEffect, useRef, useState } from 'react'
 import { useI18n, pick } from '../i18n'
 
 // 面向開發者：讓別人不透過 UI、直接用指令 (curl / CLI / 任何 HTTP client) 呼叫 InvisiGuard API。
@@ -56,6 +56,16 @@ const STRINGS = {
         cli: 'Command-line tool',
         cliNote: 'A zero-dependency Python CLI wraps the same endpoints. See cli/invisiguard.py in the repository.',
         cliEnv: 'Override the target with the INVISIGUARD_API environment variable, or pass --base.',
+        chooserAgentTitle: 'I am using an AI agent',
+        chooserAgentDesc: 'Copy a complete English integration brief for Claude, Cursor, or any coding agent.',
+        chooserDevTitle: 'I am reading the documentation',
+        chooserDevDesc: 'The full API reference: endpoints, parameters, responses, and code examples.',
+        modeAgent: 'AI agent',
+        modeDocs: 'Documentation',
+        agentTitle: 'Integration brief for AI agents',
+        agentNote: 'A complete English integration brief covering the base URL, authentication model, every endpoint with parameters and response schemas, the error envelope, engine guidance, and the CLI. Paste it into your agent’s context to begin the integration.',
+        agentCopy: 'Copy agent prompt',
+        agentCopied: 'Copied',
         copy: 'Copy',
         copied: 'Copied',
     },
@@ -112,6 +122,16 @@ const STRINGS = {
         cli: '命令列工具',
         cliNote: '倉庫附了一支零相依的 Python CLI，封裝同一組端點，見 cli/invisiguard.py。',
         cliEnv: '用環境變數 INVISIGUARD_API 覆寫目標網址，或用 --base 指定。',
+        chooserAgentTitle: '我使用 AI Agent',
+        chooserAgentDesc: '複製一份完整的英文整合說明，交給 Claude、Cursor 或任何程式代理。',
+        chooserDevTitle: '閱讀技術文件',
+        chooserDevDesc: '完整 API 參考：端點、參數、回應與程式範例。',
+        modeAgent: 'AI Agent',
+        modeDocs: '技術文件',
+        agentTitle: '給 AI Agent 的整合說明',
+        agentNote: '一份完整的英文整合說明，涵蓋 Base URL、認證模式、各端點的參數與回應格式、錯誤格式、引擎建議與 CLI。貼入你的 Agent 上下文即可開始串接。',
+        agentCopy: '複製 Agent Prompt',
+        agentCopied: '已複製',
         copy: '複製',
         copied: '已複製',
     },
@@ -120,6 +140,8 @@ const STRINGS = {
 // ----------------------------------------------------------------------------
 // Inline syntax highlighter (plain JS, no dependencies). Returns React nodes.
 // Palette lives on the slate-950 terminal blocks: restrained, not rainbow.
+// (A terminal is a terminal: the dark-slate INSIDE of these blocks is a
+// component surface, not a theme. The page around them is light-only.)
 //   comments  -> slate-500     strings  -> emerald-300   flags   -> sky-300
 //   keywords  -> blue-300      vars/$   -> amber-300      numbers -> amber-300
 //   json keys -> sky-300       default  -> slate-100
@@ -211,8 +233,9 @@ const CopyIcon = () => (
     </svg>
 )
 
+// R6 success check: the check pops in with a spring scale when copy succeeds.
 const CheckIcon = () => (
-    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg className="h-3.5 w-3.5 animate-pop-in" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <polyline points="20 6 9 17 4 12" />
     </svg>
 )
@@ -224,19 +247,43 @@ const LockIcon = () => (
     </svg>
 )
 
+// AI sparkle（Gemini 式四角星芒）：以內凹曲線構成的四角星，實心填色。
+const SparkleIcon = () => (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 2c.9 5.2 4.8 9.1 10 10-5.2.9-9.1 4.8-10 10-.9-5.2-4.8-9.1-10-10 5.2-.9 9.1-4.8 10-10z" />
+    </svg>
+)
+
+const BookIcon = () => (
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+    </svg>
+)
+
 const MethodPill = ({ method }) => (
-    <span className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-[11px] font-mono font-semibold tracking-wide text-slate-600 dark:text-slate-300 ring-1 ring-inset ring-slate-200 dark:ring-slate-700">
+    <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-mono font-semibold tracking-wide text-slate-600 ring-1 ring-inset ring-slate-200">
         {method}
     </span>
 )
 
 // ----------------------------------------------------------------------------
 // Terminal block with copy button. Optional language tabs share the top bar.
+// R1: a measured pill glides behind the active language tab (presentational
+// refs/state only). R2: spring press on tabs + copy. R6: check pops on copy.
 // ----------------------------------------------------------------------------
 const CmdBlock = ({ code, lang = 'shell', tabs, copyLabel, copiedLabel }) => {
     const hasTabs = Array.isArray(tabs) && tabs.length > 0
     const [active, setActive] = useState(0)
     const [copied, setCopied] = useState(false)
+    // R1 tab pill glide: measure the active tab so the pill can slide to it.
+    const tabRefs = useRef([])
+    const [pill, setPill] = useState({ left: 0, width: 0, ready: false })
+    useLayoutEffect(() => {
+        if (!hasTabs) return
+        const el = tabRefs.current[active]
+        if (el) setPill({ left: el.offsetLeft, width: el.offsetWidth, ready: true })
+    }, [hasTabs, active])
     const cur = hasTabs ? tabs[active] : { code, lang }
     const onCopy = async () => {
         try {
@@ -246,17 +293,25 @@ const CmdBlock = ({ code, lang = 'shell', tabs, copyLabel, copiedLabel }) => {
         } catch { /* ignore */ }
     }
     return (
-        <div className="relative rounded-xl border border-slate-800 bg-slate-900 dark:bg-slate-950 shadow-card overflow-hidden">
-            <div className="flex items-center justify-between gap-3 border-b border-slate-800 bg-slate-900/80 dark:bg-slate-950/80 px-3 py-2">
+        <div className="relative rounded-xl border border-slate-800 bg-slate-950 shadow-card overflow-hidden">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-800 bg-slate-900/60 px-3 py-2">
                 {hasTabs ? (
-                    <div role="tablist" aria-label="Language" className="flex items-center gap-1">
+                    <div role="tablist" aria-label="Language" className="relative flex items-center gap-1">
+                        {pill.ready && (
+                            <span
+                                aria-hidden="true"
+                                className="absolute top-0 bottom-0 rounded-md bg-slate-700 transition-[left,width] duration-[400ms] ease-glide"
+                                style={{ left: pill.left, width: pill.width }}
+                            />
+                        )}
                         {tabs.map((tb, i) => (
                             <button
                                 key={tb.id}
+                                ref={(el) => { tabRefs.current[i] = el }}
                                 role="tab"
                                 aria-selected={i === active}
                                 onClick={() => { setActive(i); setCopied(false) }}
-                                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${i === active ? 'bg-slate-700 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}
+                                className={`relative rounded-md px-2.5 py-1 text-xs font-medium transition-[color,background-color,transform] duration-200 ease-spring active:scale-[0.96] ${i === active ? 'text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}`}
                             >
                                 {tb.label}
                             </button>
@@ -271,7 +326,7 @@ const CmdBlock = ({ code, lang = 'shell', tabs, copyLabel, copiedLabel }) => {
                 )}
                 <button
                     onClick={onCopy}
-                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-all duration-200 active:scale-[0.98] ${copied ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' : 'border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-700 hover:text-white'}`}
+                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-all duration-200 ease-spring active:scale-[0.96] ${copied ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400' : 'border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-700 hover:text-white'}`}
                 >
                     {copied ? <CheckIcon /> : <CopyIcon />}
                     {copied ? copiedLabel : copyLabel}
@@ -284,16 +339,16 @@ const CmdBlock = ({ code, lang = 'shell', tabs, copyLabel, copiedLabel }) => {
 
 const SectionHeader = ({ title, note }) => (
     <div>
-        <h3 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">{title}</h3>
-        {note && <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 max-w-[65ch]">{note}</p>}
+        <h3 className="text-base font-semibold tracking-tight text-slate-900">{title}</h3>
+        {note && <p className="mt-1.5 text-sm text-slate-500 max-w-[65ch]">{note}</p>}
     </div>
 )
 
 const BlockLabel = ({ children }) => (
-    <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">{children}</div>
+    <div className="mb-2 text-[11px] font-semibold tracking-[0.12em] text-slate-400">{children}</div>
 )
 
-const statusClass = (s) => (s >= 500 ? 'text-rose-600 dark:text-rose-400' : s >= 400 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400')
+const statusClass = (s) => (s >= 500 ? 'text-rose-600' : s >= 400 ? 'text-amber-600' : 'text-emerald-600')
 
 const ERROR_ROWS = [
     { code: 'INVALID_ENGINE', status: 400, key: 'errInvalidEngine' },
@@ -347,6 +402,10 @@ export default function DevelopersTab() {
     const em = pick(ERROR_MEANINGS, lang)
     const copy = t.copy
     const copied = t.copied
+
+    // R4 stagger entrance: top-level blocks cascade in on mount (same
+    // animate-fade-up + animationDelay pattern as the other tabs).
+    const staggerAt = (i) => ({ animationDelay: `${i * 60}ms` })
 
     // Commands (exact strings, base URLs, endpoint paths, field names preserved).
     const baseCmd = `BASE=https://invisiguard.iosoftware.ai/api/v1   # local: http://localhost:8000/v1`
@@ -457,6 +516,74 @@ python cli/invisiguard.py verify watermarked.png --engine classic`
   }
 }`
 
+    // 給 AI Agent 的完整英文整合說明：直接由本頁的指令與回應範例變數組成，
+    // 單一事實來源：頁面文件更新時 prompt 自動同步，永不漂移。
+    const agentPrompt = `You are integrating the InvisiGuard API, an invisible image watermarking service by io Software. Use this brief as the complete integration contract; you do not need any other documentation.
+
+## Base URL
+Production: https://invisiguard.iosoftware.ai/api/v1
+Local development: http://localhost:8000/v1
+(Set it once as $BASE and reuse it in every request.)
+
+## Authentication
+No API key travels with requests. The watermark secret (WATERMARK_KEY) lives on the server and every mark is derived from it. Do not add auth headers.
+
+## Endpoints
+
+### 1. GET /health
+Liveness check.
+Response:
+${healthResp}
+
+### 2. POST /embed (multipart/form-data)
+Fields:
+- file (required): the image to protect, PNG or JPEG.
+- text (required): the watermark text to embed.
+- engine (optional): "classic" (default) or "trustmark".
+- certify (optional): "true" to run a live attack battery and include a robustness report.
+Success response:
+${embedResp}
+Notes: with engine=trustmark, data.watermark_id is a short ID and the full text is stored in a server-side registry. Download the watermarked image from data.image_url and keep it as lossless PNG for best durability.
+
+### 3. POST /verify (multipart/form-data, blind: no original image needed)
+Fields:
+- image (required): the suspect image to check.
+- engine (optional): "classic" (default) or "trustmark".
+Success response:
+${verifyResp}
+
+## Error envelope (all errors)
+${errorResp}
+Validation errors add details.field / details.value_provided / details.expected; processing errors add details.stage / details.recoverable. HTTP 503 with error_code ENGINE_UNAVAILABLE means the deep-learning engine is not enabled on this server; fall back to engine=classic.
+
+## Engines
+- classic: keyed DWT-QIM. Embeds up to 92 UTF-8 bytes directly in pixels. Crop-resistant, deterministic, no GPU required. Best for keyed, self-contained marks and offline proof.
+- trustmark: deep-learning watermark. Embeds a short ID; the registered text (up to 2000 chars) lives in the server registry. Survives JPEG recompression and resizing; best for images shared on social platforms.
+
+## Example (curl)
+${curlEmbed}
+
+## Command-line tool (zero-dependency Python, wraps the same endpoints)
+${cliCmd}
+
+## Integration rules
+- Always send multipart/form-data for /embed and /verify.
+- Treat the verify response's verified/confidence fields as the source of truth for detection.
+- Prefer engine=trustmark for social-platform pipelines and engine=classic for maximum text capacity or offline proof.
+- Surface the error envelope's "suggestion" field to end users.
+- Keep watermarked output as PNG; re-encoding to JPEG weakens the classic mark.`
+
+    // 受眾分流：進入頁面先選「AI Agent / 技術文件」，選定後可用小切換器互換。
+    const [mode, setMode] = useState(null)
+    const [agentCopied, setAgentCopied] = useState(false)
+    const copyAgentPrompt = async () => {
+        try {
+            await navigator.clipboard.writeText(agentPrompt)
+            setAgentCopied(true)
+            setTimeout(() => setAgentCopied(false), 1800)
+        } catch { /* clipboard 不可用時靜默忽略 */ }
+    }
+
     const embedParams = [
         { name: 'file', req: true, desc: t.pFile },
         { name: 'text', req: true, desc: t.pText },
@@ -507,136 +634,218 @@ python cli/invisiguard.py verify watermarked.png --engine classic`
     ]
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-card p-6 sm:p-8 animate-fade-up">
-            <div className="max-w-[65ch]">
-                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">{t.eyebrow}</span>
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">{t.title}</h2>
-                <p className="mt-2.5 text-slate-600 dark:text-slate-400">{t.intro}</p>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-card p-6 sm:p-8">
+            <div className="max-w-[65ch] animate-fade-up" style={staggerAt(0)}>
+                <span className="text-xs font-semibold tracking-[0.18em] text-blue-600">{t.eyebrow}</span>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">{t.title}</h2>
+                <p className="mt-2.5 text-slate-600">{t.intro}</p>
             </div>
 
-            <div className="mt-8 space-y-10 max-w-4xl">
-                {/* Base URL */}
-                <section className="space-y-3">
-                    <SectionHeader title={t.base} note={t.baseNote} />
-                    <CmdBlock code={baseCmd} lang="shell" copyLabel={copy} copiedLabel={copied} />
-                </section>
-
-                {/* Authentication */}
-                <div className="rounded-2xl border border-blue-100 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/40 p-5">
-                    <div className="flex items-center gap-2 text-blue-900 dark:text-blue-200">
-                        <LockIcon />
-                        <h3 className="text-sm font-semibold tracking-tight">{t.auth}</h3>
-                    </div>
-                    <p className="mt-1.5 text-sm text-blue-800/80 dark:text-blue-300/80 max-w-[65ch]">{t.authNote}</p>
+            {/* 受眾分流：進入頁面先選擇閱讀路徑（Agent / 技術文件） */}
+            {mode === null && (
+                <div className="mx-auto mt-8 grid max-w-3xl gap-4 sm:grid-cols-2 animate-fade-up" style={staggerAt(1)}>
+                    <button
+                        type="button"
+                        onClick={() => setMode('agent')}
+                        className="group flex flex-col items-center text-center rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-card transition-[transform,box-shadow,border-color] duration-300 ease-glide hover:-translate-y-1 hover:border-blue-300 hover:shadow-card-hover active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-blue-500 focus:outline-none"
+                    >
+                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-white shadow-accent-sm">
+                            <SparkleIcon />
+                        </span>
+                        <h3 className="mt-4 text-base font-semibold tracking-tight text-slate-900">{t.chooserAgentTitle}</h3>
+                        <p className="mt-1.5 text-sm text-slate-500 max-w-[28ch]">{t.chooserAgentDesc}</p>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setMode('docs')}
+                        className="group flex flex-col items-center text-center rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-card transition-[transform,box-shadow,border-color] duration-300 ease-glide hover:-translate-y-1 hover:border-blue-300 hover:shadow-card-hover active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-blue-500 focus:outline-none"
+                    >
+                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600">
+                            <BookIcon />
+                        </span>
+                        <h3 className="mt-4 text-base font-semibold tracking-tight text-slate-900">{t.chooserDevTitle}</h3>
+                        <p className="mt-1.5 text-sm text-slate-500 max-w-[28ch]">{t.chooserDevDesc}</p>
+                    </button>
                 </div>
+            )}
 
-                {/* Endpoints */}
-                <section className="space-y-4">
-                    <SectionHeader title={t.endpoints} note={t.endpointsNote} />
-                    <div className="space-y-4">
-                        {endpointDefs.map((ep) => (
-                            <div key={ep.path} className="rounded-2xl border border-slate-200 dark:border-slate-800 shadow-card overflow-hidden">
-                                <div className="flex flex-wrap items-center gap-2.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30 px-5 py-3.5">
-                                    <MethodPill method={ep.method} />
-                                    <code className="font-mono text-sm text-slate-900 dark:text-slate-100">{ep.path}</code>
-                                    <span className="text-sm text-slate-500 dark:text-slate-400">{ep.label}</span>
-                                </div>
-                                <div className="space-y-4 p-5">
-                                    {ep.note && <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[65ch]">{ep.note}</p>}
-                                    {ep.params.length > 0 && (
-                                        <div>
-                                            <BlockLabel>{t.params}</BlockLabel>
-                                            <div className="space-y-2 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30 p-3.5">
-                                                {ep.params.map((p) => (
-                                                    <div key={p.name} className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                                                        <code className="font-mono text-[13px] font-medium text-blue-700 dark:text-blue-300">{p.name}</code>
-                                                        <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ${p.req ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 ring-blue-100 dark:ring-blue-900/50' : 'text-slate-500 dark:text-slate-400 ring-slate-200 dark:ring-slate-700'}`}>{p.req ? t.required : t.optional}</span>
-                                                        <span className="text-sm text-slate-500 dark:text-slate-400">{p.desc}</span>
-                                                    </div>
-                                                ))}
+            {/* 已選定路徑：提供小型切換器，兩種內容可互換 */}
+            {mode !== null && (
+                <div className="mt-8 flex justify-center">
+                    <div className="inline-flex rounded-2xl border border-slate-200 bg-slate-50 p-1">
+                        <button
+                            type="button"
+                            onClick={() => setMode('agent')}
+                            aria-pressed={mode === 'agent'}
+                            className={`rounded-xl px-4 py-2 text-sm font-medium transition-[color,background-color,transform] duration-200 ease-spring active:scale-[0.96] ${mode === 'agent' ? 'bg-white text-blue-700 shadow-card' : 'text-slate-500 hover:text-slate-800'}`}
+                        >
+                            {t.modeAgent}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setMode('docs')}
+                            aria-pressed={mode === 'docs'}
+                            className={`rounded-xl px-4 py-2 text-sm font-medium transition-[color,background-color,transform] duration-200 ease-spring active:scale-[0.96] ${mode === 'docs' ? 'bg-white text-blue-700 shadow-card' : 'text-slate-500 hover:text-slate-800'}`}
+                        >
+                            {t.modeDocs}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Agent 路徑：整合說明 + 一鍵複製（不提供預覽，內容以複製為準） */}
+            {mode === 'agent' && (
+                <section className="mx-auto mt-6 max-w-4xl rounded-2xl border border-blue-100 bg-blue-50 p-5 sm:p-6 animate-fade-up">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
+                        <div className="flex min-w-0 flex-1 items-start gap-3.5">
+                            <span className="shrink-0 mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-accent-sm">
+                                <SparkleIcon />
+                            </span>
+                            <div className="min-w-0">
+                                <h3 className="text-base font-semibold tracking-tight text-blue-900">{t.agentTitle}</h3>
+                                <p className="mt-1 text-sm text-blue-800/80 max-w-[65ch]">{t.agentNote}</p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={copyAgentPrompt}
+                            className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-accent-sm transition-[background-color,transform] duration-200 ease-spring hover:bg-blue-700 active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus:outline-none"
+                        >
+                            {agentCopied ? (
+                                <><span className="animate-pop-in inline-flex"><CheckIcon /></span> {t.agentCopied}</>
+                            ) : (
+                                <><CopyIcon /> {t.agentCopy}</>
+                            )}
+                        </button>
+                    </div>
+                </section>
+            )}
+
+            {mode === 'docs' && (
+                <div className="mx-auto mt-6 space-y-10 max-w-4xl animate-fade-up">
+                    {/* Base URL */}
+                    <section className="space-y-3 animate-fade-up" style={staggerAt(1)}>
+                        <SectionHeader title={t.base} note={t.baseNote} />
+                        <CmdBlock code={baseCmd} lang="shell" copyLabel={copy} copiedLabel={copied} />
+                    </section>
+
+                    {/* Authentication */}
+                    <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 animate-fade-up" style={staggerAt(2)}>
+                        <div className="flex items-center gap-2 text-blue-900">
+                            <LockIcon />
+                            <h3 className="text-sm font-semibold tracking-tight">{t.auth}</h3>
+                        </div>
+                        <p className="mt-1.5 text-sm text-blue-800/80 max-w-[65ch]">{t.authNote}</p>
+                    </div>
+
+                    {/* Endpoints */}
+                    <section className="space-y-4 animate-fade-up" style={staggerAt(3)}>
+                        <SectionHeader title={t.endpoints} note={t.endpointsNote} />
+                        <div className="space-y-4">
+                            {endpointDefs.map((ep) => (
+                                <div key={ep.path} className="rounded-2xl border border-slate-200 bg-white shadow-card overflow-hidden">
+                                    <div className="flex flex-wrap items-center gap-2.5 border-b border-slate-100 bg-slate-50/60 px-5 py-3.5">
+                                        <MethodPill method={ep.method} />
+                                        <code className="font-mono text-sm text-slate-900">{ep.path}</code>
+                                        <span className="text-sm text-slate-500">{ep.label}</span>
+                                    </div>
+                                    <div className="space-y-4 p-5">
+                                        {ep.note && <p className="text-sm text-slate-500 max-w-[65ch]">{ep.note}</p>}
+                                        {ep.params.length > 0 && (
+                                            <div>
+                                                <BlockLabel>{t.params}</BlockLabel>
+                                                <div className="space-y-2 rounded-xl border border-slate-100 bg-slate-50/60 p-3.5">
+                                                    {ep.params.map((p) => (
+                                                        <div key={p.name} className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                                                            <code className="font-mono text-[13px] font-medium text-blue-700">{p.name}</code>
+                                                            <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ring-1 ring-inset ${p.req ? 'bg-blue-50 text-blue-700 ring-blue-100' : 'text-slate-500 ring-slate-200'}`}>{p.req ? t.required : t.optional}</span>
+                                                            <span className="text-sm text-slate-500">{p.desc}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
+                                        )}
+                                        <div>
+                                            <BlockLabel>{t.respExample}</BlockLabel>
+                                            <CmdBlock code={ep.resp} lang="json" copyLabel={copy} copiedLabel={copied} />
                                         </div>
-                                    )}
-                                    <div>
-                                        <BlockLabel>{t.respExample}</BlockLabel>
-                                        <CmdBlock code={ep.resp} lang="json" copyLabel={copy} copiedLabel={copied} />
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
+                            ))}
+                        </div>
+                    </section>
 
-                {/* Request examples (multi-language) */}
-                <section className="space-y-4">
-                    <SectionHeader title={t.examples} note={t.examplesNote} />
-                    <div className="space-y-3">
-                        <BlockLabel>{`${t.embedExample}  ·  POST /embed`}</BlockLabel>
-                        <CmdBlock tabs={embedTabs} copyLabel={copy} copiedLabel={copied} />
-                    </div>
-                    <div className="space-y-3">
-                        <BlockLabel>{`${t.verifyExample}  ·  POST /verify`}</BlockLabel>
-                        <CmdBlock tabs={verifyTabs} copyLabel={copy} copiedLabel={copied} />
-                    </div>
-                </section>
+                    {/* Request examples (multi-language) */}
+                    <section className="space-y-4 animate-fade-up" style={staggerAt(4)}>
+                        <SectionHeader title={t.examples} note={t.examplesNote} />
+                        <div className="space-y-3">
+                            <BlockLabel>{`${t.embedExample}  ·  POST /embed`}</BlockLabel>
+                            <CmdBlock tabs={embedTabs} copyLabel={copy} copiedLabel={copied} />
+                        </div>
+                        <div className="space-y-3">
+                            <BlockLabel>{`${t.verifyExample}  ·  POST /verify`}</BlockLabel>
+                            <CmdBlock tabs={verifyTabs} copyLabel={copy} copiedLabel={copied} />
+                        </div>
+                    </section>
 
-                {/* Error handling */}
-                <section className="space-y-4">
-                    <SectionHeader title={t.errors} note={t.errorsNote} />
-                    <div>
-                        <BlockLabel>{t.errorEnvelope}</BlockLabel>
-                        <CmdBlock code={errorResp} lang="json" copyLabel={copy} copiedLabel={copied} />
-                    </div>
-                    <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-card">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-slate-50/60 dark:bg-slate-800/30 text-[11px] uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
-                                <tr>
-                                    <th className="px-4 py-2.5 font-semibold">{t.codeCol}</th>
-                                    <th className="px-4 py-2.5 font-semibold">{t.statusCol}</th>
-                                    <th className="px-4 py-2.5 font-semibold">{t.meaningCol}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {ERROR_ROWS.map((r) => (
-                                    <tr key={r.code}>
-                                        <td className="whitespace-nowrap px-4 py-2.5"><code className="font-mono text-[12px] text-slate-700 dark:text-slate-200">{r.code}</code></td>
-                                        <td className="px-4 py-2.5"><span className={`font-mono tabular-nums font-semibold ${statusClass(r.status)}`}>{r.status}</span></td>
-                                        <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">{em[r.key]}</td>
+                    {/* Error handling */}
+                    <section className="space-y-4 animate-fade-up" style={staggerAt(5)}>
+                        <SectionHeader title={t.errors} note={t.errorsNote} />
+                        <div>
+                            <BlockLabel>{t.errorEnvelope}</BlockLabel>
+                            <CmdBlock code={errorResp} lang="json" copyLabel={copy} copiedLabel={copied} />
+                        </div>
+                        <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-card">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50/60 text-[11px] tracking-[0.12em] text-slate-400">
+                                    <tr>
+                                        <th className="px-4 py-2.5 font-semibold">{t.codeCol}</th>
+                                        <th className="px-4 py-2.5 font-semibold">{t.statusCol}</th>
+                                        <th className="px-4 py-2.5 font-semibold">{t.meaningCol}</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                {/* Engines comparison */}
-                <section className="space-y-4">
-                    <SectionHeader title={t.engines} note={t.enginesNote} />
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        {engineCards.map((card) => (
-                            <div key={card.name} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-card p-5 sm:p-6">
-                                <span className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-950/40 px-2.5 py-0.5 font-mono text-xs font-semibold text-blue-700 dark:text-blue-300 ring-1 ring-inset ring-blue-100 dark:ring-blue-900/50">{card.name}</span>
-                                <p className="mt-2.5 text-sm text-slate-500 dark:text-slate-400">{card.desc}</p>
-                                <dl className="mt-4 space-y-2.5">
-                                    {card.rows.map((row) => (
-                                        <div key={row.label} className="grid grid-cols-[6.5rem_1fr] gap-2 text-sm">
-                                            <dt className="text-slate-400 dark:text-slate-500">{row.label}</dt>
-                                            <dd className="text-slate-700 dark:text-slate-200">{row.value}</dd>
-                                        </div>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {ERROR_ROWS.map((r) => (
+                                        <tr key={r.code}>
+                                            <td className="whitespace-nowrap px-4 py-2.5"><code className="font-mono text-[12px] text-slate-700">{r.code}</code></td>
+                                            <td className="px-4 py-2.5"><span className={`font-mono tabular-nums font-semibold ${statusClass(r.status)}`}>{r.status}</span></td>
+                                            <td className="px-4 py-2.5 text-slate-500">{em[r.key]}</td>
+                                        </tr>
                                     ))}
-                                </dl>
-                            </div>
-                        ))}
-                    </div>
-                </section>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
 
-                {/* CLI reference */}
-                <section className="space-y-3">
-                    <SectionHeader title={t.cli} note={t.cliNote} />
-                    <CmdBlock code={cliCmd} lang="shell" copyLabel={copy} copiedLabel={copied} />
-                    <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[65ch]">{t.cliEnv}</p>
-                </section>
-            </div>
+                    {/* Engines comparison */}
+                    <section className="space-y-4 animate-fade-up" style={staggerAt(6)}>
+                        <SectionHeader title={t.engines} note={t.enginesNote} />
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            {engineCards.map((card) => (
+                                <div key={card.name} className="rounded-2xl border border-slate-200 bg-white shadow-card p-5 sm:p-6">
+                                    <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 font-mono text-xs font-semibold text-blue-700 ring-1 ring-inset ring-blue-100">{card.name}</span>
+                                    <p className="mt-2.5 text-sm text-slate-500">{card.desc}</p>
+                                    <dl className="mt-4 space-y-2.5">
+                                        {card.rows.map((row) => (
+                                            <div key={row.label} className="grid grid-cols-[6.5rem_1fr] gap-2 text-sm">
+                                                <dt className="text-slate-400">{row.label}</dt>
+                                                <dd className="text-slate-700">{row.value}</dd>
+                                            </div>
+                                        ))}
+                                    </dl>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* CLI reference */}
+                    <section className="space-y-3 animate-fade-up" style={staggerAt(7)}>
+                        <SectionHeader title={t.cli} note={t.cliNote} />
+                        <CmdBlock code={cliCmd} lang="shell" copyLabel={copy} copiedLabel={copied} />
+                        <p className="text-sm text-slate-500 max-w-[65ch]">{t.cliEnv}</p>
+                    </section>
+                </div>
+            )}
         </div>
     )
 }

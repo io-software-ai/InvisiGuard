@@ -5,14 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <!-- Primary SEO -->
-    <title>InvisiGuard — Invisible Watermarking &amp; Content Authenticity</title>
-    <meta name="description" content="InvisiGuard embeds an invisible, tamper-resistant watermark with two engines and issues a real robustness certificate — proof your image survives JPEG, resizing, and cropping. A product of io Software." />
+    <title>InvisiGuard | Invisible Watermarking &amp; Content Authenticity</title>
+    <meta name="description" content="InvisiGuard embeds an invisible, tamper-resistant watermark with two engines and issues a real robustness certificate: proof your image survives JPEG, resizing, and cropping. A product of io Software." />
     <meta name="keywords" content="invisible watermarking, image watermark, content authenticity, robustness certificate, DWT QIM, TrustMark, C2PA, provenance, tamper-evident, io Software, InvisiGuard" />
     <meta name="author" content="io Software" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://invisiguard.iosoftware.ai/" />
-    <meta name="theme-color" content="#0a0e16" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#f6f8fb" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#f6f8fb" />
 
     <!-- Favicon (shield-check, no external file) -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563eb'/%3E%3Cpath d='M16 6l6 2.4v5.6c0 4.2-3.4 6.8-6 7.7-2.6-.9-6-3.5-6-7.7V8.4z' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M12.8 15.6l2.4 2.4 4-4.4' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
@@ -20,19 +19,19 @@
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="InvisiGuard" />
-    <meta property="og:title" content="InvisiGuard — Invisible Marks, Provable Ownership" />
+    <meta property="og:title" content="InvisiGuard | Invisible Marks, Provable Ownership" />
     <meta property="og:description" content="Embed an invisible, tamper-resistant watermark, then prove it survives JPEG, resizing, and cropping with a real robustness certificate." />
     <meta property="og:url" content="https://invisiguard.iosoftware.ai/" />
     <meta property="og:image" content="https://invisiguard.iosoftware.ai/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="InvisiGuard — Invisible Watermarking &amp; Content Authenticity. Invisible Marks, Provable Ownership." />
+    <meta property="og:image:alt" content="InvisiGuard Invisible Watermarking &amp; Content Authenticity. Invisible Marks, Provable Ownership." />
     <meta property="og:locale" content="en_US" />
     <meta property="og:locale:alternate" content="zh_TW" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="InvisiGuard — Invisible Marks, Provable Ownership" />
+    <meta name="twitter:title" content="InvisiGuard | Invisible Marks, Provable Ownership" />
     <meta name="twitter:description" content="Invisible, tamper-resistant image watermarking with a real robustness certificate. A product of io Software." />
     <meta name="twitter:image" content="https://invisiguard.iosoftware.ai/og-image.png" />
 
@@ -59,13 +58,10 @@
       ]
     }
     </script>
-    <!-- Set theme + language before paint (honors OS preference when unset) -->
+    <!-- Set language before paint (light-only theme needs no pre-paint) -->
     <script>
       (function () {
         try {
-          var t = localStorage.getItem('ig-app-theme');
-          if (t !== 'dark' && t !== 'light') { t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
-          if (t === 'dark') document.documentElement.classList.add('dark');
           var l = localStorage.getItem('ig-app-lang');
           if (l !== 'en' && l !== 'zh') { l = (navigator.language || 'en').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en'; }
           document.documentElement.lang = l === 'zh' ? 'zh-Hant' : 'en';

@@ -38,7 +38,7 @@ const STRINGS = {
         autoSelectedPrefix: "We've selected the",
         autoSelectedSuffix: 'engine for you (customize below)',
         watermarkTextLabel: 'Watermark Text',
-        placeholder: 'e.g., Copyright 2025',
+        placeholder: 'e.g., Copyright 2026',
         unitChars: 'chars',
         unitBytes: 'bytes',
         trustmarkStorageHint: 'Text is stored server-side; the image only embeds a short ID.',
@@ -53,7 +53,7 @@ const STRINGS = {
         autoSelectedPrefix: '已為你選擇',
         autoSelectedSuffix: '引擎（可於下方自訂）',
         watermarkTextLabel: '浮水印文字',
-        placeholder: '例如：Copyright 2025',
+        placeholder: '例如：Copyright 2026',
         unitChars: '字元',
         unitBytes: '位元組',
         trustmarkStorageHint: '文字存於伺服器，影像只嵌入短 ID。',
@@ -99,10 +99,10 @@ export default function ConfigPanel({ text, setText, engine, setEngine, onEmbed,
     return (
         <div className="space-y-6">
             <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
                     {t.purposeQuestion}
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                     {PURPOSE_OPTIONS.map((opt) => {
                         const isActive = purpose === opt.id
                         const Icon = opt.Icon
@@ -113,11 +113,11 @@ export default function ConfigPanel({ text, setText, engine, setEngine, onEmbed,
                                 disabled={loading}
                                 onClick={() => handlePurposeSelect(opt)}
                                 className={`
-                                    flex flex-col items-center justify-center gap-2 px-3 py-3.5 rounded-xl border text-xs font-medium transition-all duration-200 text-center
+                                    flex flex-col items-center justify-center gap-2 px-3 py-3.5 rounded-xl border text-xs font-medium transition-all duration-200 ease-spring text-center
                                     ${isActive
-                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/30 shadow-accent-sm'
-                                        : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-card-hover'}
-                                    ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-[0.98]'}
+                                        ? 'border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-500/30 shadow-accent-sm scale-[1.02]'
+                                        : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:shadow-card-hover'}
+                                    ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-[0.96]'}
                                 `}
                             >
                                 <Icon className="w-5 h-5" />
@@ -127,7 +127,7 @@ export default function ConfigPanel({ text, setText, engine, setEngine, onEmbed,
                     })}
                 </div>
                 {selectedPurpose?.engine && (
-                    <p className="mt-3 text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/50 rounded-xl px-3 py-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                    <p className="mt-3 text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2 animate-fade-up">
                         {t.autoSelectedPrefix} <strong className="font-semibold">{getEngineLabel(selectedPurpose.engine, lang)}</strong> {t.autoSelectedSuffix}
                     </p>
                 )}
@@ -138,7 +138,7 @@ export default function ConfigPanel({ text, setText, engine, setEngine, onEmbed,
             )}
 
             <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
                     {t.watermarkTextLabel}
                 </label>
                 <div className="relative">
@@ -146,15 +146,15 @@ export default function ConfigPanel({ text, setText, engine, setEngine, onEmbed,
                         type="text"
                         value={text}
                         onChange={(e) => setText(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-4 py-3 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition-all focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder-slate-400 transition-all duration-200 ease-glide focus:border-blue-500 focus:bg-white"
                         placeholder={t.placeholder}
                     />
                 </div>
-                <div className={`mt-2 text-right text-xs font-mono tabular-nums ${isOverLimit ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                <div className={`mt-2 text-right text-xs font-mono tabular-nums transition-colors duration-200 ${isOverLimit ? 'text-rose-600' : 'text-slate-400'}`}>
                     {count} / {limit} {unit}
                 </div>
                 {isTrustmark && (
-                    <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                    <p className="mt-1 text-xs text-slate-400">
                         {t.trustmarkStorageHint}
                     </p>
                 )}
@@ -164,10 +164,10 @@ export default function ConfigPanel({ text, setText, engine, setEngine, onEmbed,
                 onClick={onEmbed}
                 disabled={loading || !text || isOverLimit}
                 className={`
-                    w-full flex items-center justify-center gap-2 rounded-xl py-3.5 text-base font-semibold transition-all duration-200
+                    w-full flex items-center justify-center gap-2 rounded-xl py-3.5 text-base font-semibold transition-all duration-200 ease-spring
                     ${loading || !text || isOverLimit
-                        ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed shadow-none'
-                        : 'bg-blue-600 text-white shadow-accent hover:bg-blue-700 active:scale-[0.99]'}
+                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                        : 'bg-blue-600 text-white shadow-accent hover:bg-blue-700 hover:-translate-y-0.5 active:scale-[0.96]'}
                 `}
             >
                 {loading ? (

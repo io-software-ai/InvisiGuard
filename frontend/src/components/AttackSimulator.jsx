@@ -41,48 +41,48 @@ export default function AttackSimulator({ imageUrl, onExport }) {
   }
 
   return (
-    <div className="animate-fade-up overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-card">
-      <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30">
-        <h3 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">Attack Simulator</h3>
+    <div className="animate-fade-up overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+      <div className="p-5 sm:p-6 border-b border-slate-100 bg-slate-50/60">
+        <h3 className="text-lg font-semibold tracking-tight text-slate-900">Attack Simulator</h3>
       </div>
 
       <div className="p-5 sm:p-6 space-y-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:gap-6">
           <div className="flex-1 space-y-2">
             <div className="flex items-center justify-between">
-              <label htmlFor="attack-rotation" className="text-sm font-medium text-slate-700 dark:text-slate-300">Rotation</label>
-              <span className="font-mono tabular-nums text-xs text-slate-500 dark:text-slate-400">{rotation}°</span>
+              <label htmlFor="attack-rotation" className="text-sm font-medium text-slate-700">Rotation</label>
+              <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 font-mono tabular-nums text-xs text-slate-600">{rotation}°</span>
             </div>
             <input
               id="attack-rotation"
               type="range" min="-45" max="45" value={rotation}
               onChange={e => setRotation(Number(e.target.value))}
               aria-label="Rotation"
-              className="w-full cursor-pointer accent-blue-600 dark:accent-blue-500"
+              className="w-full cursor-pointer accent-blue-600"
             />
           </div>
           <div className="flex-1 space-y-2">
             <div className="flex items-center justify-between">
-              <label htmlFor="attack-scale" className="text-sm font-medium text-slate-700 dark:text-slate-300">Scale</label>
-              <span className="font-mono tabular-nums text-xs text-slate-500 dark:text-slate-400">{scale}x</span>
+              <label htmlFor="attack-scale" className="text-sm font-medium text-slate-700">Scale</label>
+              <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 font-mono tabular-nums text-xs text-slate-600">{scale}x</span>
             </div>
             <input
               id="attack-scale"
               type="range" min="0.5" max="1.5" step="0.1" value={scale}
               onChange={e => setScale(Number(e.target.value))}
               aria-label="Scale"
-              className="w-full cursor-pointer accent-blue-600 dark:accent-blue-500"
+              className="w-full cursor-pointer accent-blue-600"
             />
           </div>
         </div>
 
-        <div className="flex justify-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800/50">
+        <div className="flex justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
           <canvas ref={canvasRef} className="max-w-full max-h-[400px]" />
         </div>
 
         <button
           onClick={handleExport}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-base font-semibold text-white shadow-accent transition-all duration-200 hover:bg-blue-700 active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-base font-semibold text-white shadow-accent transition-[transform,background-color,box-shadow] duration-200 ease-spring hover:bg-blue-700 hover:-translate-y-0.5 active:scale-[0.96] disabled:opacity-50 disabled:pointer-events-none"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
             <circle cx="12" cy="12" r="9" />

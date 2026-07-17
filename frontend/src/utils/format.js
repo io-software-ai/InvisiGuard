@@ -12,12 +12,12 @@
 export function getConfidenceTier(confidence) {
     const pct = Math.round((confidence ?? 0) * 100)
     if (pct < 50) {
-        return { pct, level: 'low', textClass: 'text-rose-600 dark:text-rose-400' }
+        return { pct, level: 'low', textClass: 'text-rose-600' }
     }
     if (pct <= 80) {
-        return { pct, level: 'mid', textClass: 'text-amber-600 dark:text-amber-400' }
+        return { pct, level: 'mid', textClass: 'text-amber-600' }
     }
-    return { pct, level: 'high', textClass: 'text-emerald-600 dark:text-emerald-400' }
+    return { pct, level: 'high', textClass: 'text-emerald-600' }
 }
 
 /**

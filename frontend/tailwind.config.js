@@ -2,7 +2,6 @@ import animate from 'tailwindcss-animate'
 
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -19,6 +18,13 @@ export default {
       letterSpacing: {
         tightest: '-0.03em',
       },
+      // Kinetics motion vocabulary (github.com/ckissi/kinetics):
+      // spring = playful overshoot for presses/pills/chips; glide = smooth decel
+      // for entrances/lifts/reveals.
+      transitionTimingFunction: {
+        spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+        glide: 'cubic-bezier(0.16, 1, 0.3, 1)',
+      },
       // Tinted shadows only — never pure black. Slate-tinted for surfaces,
       // blue-tinted for the single accent. (redesign-skill: colored/tinted shadows)
       boxShadow: {
@@ -32,12 +38,30 @@ export default {
           '0%': { opacity: '0', transform: 'translateY(14px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        'pop-in': {
+          '0%': { opacity: '0', transform: 'scale(0.5)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        shake: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '20%': { transform: 'translateX(-6px)' },
+          '40%': { transform: 'translateX(6px)' },
+          '60%': { transform: 'translateX(-4px)' },
+          '80%': { transform: 'translateX(4px)' },
+        },
+        'menu-in': {
+          '0%': { opacity: '0', transform: 'scale(0.9) translateY(-8px)' },
+          '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
         shimmer: {
           '100%': { transform: 'translateX(100%)' },
         },
       },
       animation: {
         'fade-up': 'fade-up 0.55s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'pop-in': 'pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both',
+        shake: 'shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both',
+        'menu-in': 'menu-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both',
       },
     },
   },

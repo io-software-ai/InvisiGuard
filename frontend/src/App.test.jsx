@@ -10,9 +10,9 @@ describe('App', () => {
 
   it('renders the main title', () => {
     render(<App />)
-    // Exact match: the header brand uses the bare "InvisiGuard" text node,
-    // whereas the footer sentence merely contains it as a substring.
-    expect(screen.getByText('InvisiGuard')).toBeInTheDocument()
+    // The brand text now appears in both the header and the structured footer
+    // brand block, so assert at least one exact "InvisiGuard" node renders.
+    expect(screen.getAllByText('InvisiGuard').length).toBeGreaterThan(0)
   })
 
   it('renders the Embed tab by default', () => {
@@ -52,7 +52,7 @@ describe('App', () => {
 
     // Type watermark text but leave the image unselected so client-side validation fails;
     // the button is disabled while text is empty, so text must be filled first.
-    fireEvent.change(screen.getByPlaceholderText(/Copyright 2025/i), { target: { value: 'test' } })
+    fireEvent.change(screen.getByPlaceholderText(/Copyright 2026/i), { target: { value: 'test' } })
     // "Embed Watermark" matches both the tab button and the ConfigPanel submit button;
     // the submit button is the one rendered later in the DOM.
     const embedButtons = screen.getAllByRole('button', { name: /Embed Watermark/i })

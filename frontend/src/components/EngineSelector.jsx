@@ -42,13 +42,18 @@ export function getEngineLabel(engineId, lang) {
     return t.options[engineId]?.label ?? engineId
 }
 
+// 卡片同時需要兩種緩動：按壓形變走 spring（彈性回饋）、邊框/底色/陰影的
+// 選取狀態切換走 glide（平滑減速），故用 arbitrary transition 一次宣告。
+const CARD_TRANSITION =
+    '[transition:transform_.2s_cubic-bezier(0.34,1.56,0.64,1),border-color_.3s_cubic-bezier(0.16,1,0.3,1),background-color_.3s_cubic-bezier(0.16,1,0.3,1),box-shadow_.3s_cubic-bezier(0.16,1,0.3,1)]'
+
 export default function EngineSelector({ engine, onChange, disabled = false, className = '' }) {
     const { lang } = useI18n()
     const t = pick(STRINGS, lang)
 
     return (
         <div className={className}>
-            <label className="block text-sm font-semibold tracking-tight text-slate-700 dark:text-slate-200 mb-2.5">
+            <label className="block text-sm font-semibold tracking-tight text-slate-700 mb-2.5">
                 {t.title}
             </label>
             <div role="radiogroup" aria-label={t.title} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -64,23 +69,28 @@ export default function EngineSelector({ engine, onChange, disabled = false, cla
                             disabled={disabled}
                             onClick={() => onChange(id)}
                             className={`
-                                group text-left px-4 py-3.5 rounded-xl border transition-all duration-200 active:scale-[0.99]
+                                group text-left px-4 py-3.5 rounded-xl border ${CARD_TRANSITION}
+                                focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500
                                 ${isActive
-                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/40 shadow-card ring-1 ring-inset ring-blue-500/20'
-                                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-card-hover'}
-                                ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:-translate-y-0.5'}
+                                    ? 'border-blue-500 bg-blue-50 shadow-card ring-1 ring-inset ring-blue-500/20'
+                                    : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-card-hover'}
+                                ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:-translate-y-0.5 active:scale-[0.96]'}
                             `}
                         >
                             <div className="flex items-center justify-between gap-2">
-                                <span className={`text-sm font-semibold tracking-tight ${isActive ? 'text-blue-700 dark:text-blue-300' : 'text-slate-700 dark:text-slate-200'}`}>
+                                <span className={`text-sm font-semibold tracking-tight transition-colors duration-300 ease-glide ${isActive ? 'text-blue-700' : 'text-slate-700'}`}>
                                     {opt.label}
                                 </span>
                                 <span
                                     aria-hidden="true"
-                                    className={`h-2 w-2 shrink-0 rounded-full transition-all duration-200 ${isActive ? 'bg-blue-500 dark:bg-blue-400 ring-2 ring-blue-500/20 dark:ring-blue-400/20' : 'bg-slate-200 dark:bg-slate-700'}`}
-                                />
+                                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-300 ease-glide ${isActive ? 'border-blue-600' : 'border-slate-300 group-hover:border-slate-400'}`}
+                                >
+                                    <span
+                                        className={`block h-2 w-2 rounded-full bg-blue-600 transition-transform duration-200 ease-spring ${isActive ? 'scale-100' : 'scale-0'}`}
+                                    />
+                                </span>
                             </div>
-                            <p className={`mt-1.5 text-xs leading-snug ${isActive ? 'text-slate-600 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'}`}>{opt.description}</p>
+                            <p className={`mt-1.5 text-xs leading-snug transition-colors duration-300 ease-glide ${isActive ? 'text-slate-600' : 'text-slate-500'}`}>{opt.description}</p>
                         </button>
                     )
                 })}

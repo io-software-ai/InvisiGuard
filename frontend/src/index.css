@@ -11,14 +11,23 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 font-sans antialiased dark:bg-slate-950 dark:text-slate-100;
+    @apply bg-slate-50 text-slate-900 font-sans antialiased;
     font-feature-settings: "cv11", "ss01";
-    transition: background-color .25s ease, color .25s ease;
+    /* 全頁文字與圖片不可選取（使用者要求）；輸入框除外，見下。 */
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* 輸入類元素必須保留選取能力，否則無法正常編輯文字。 */
+  input,
+  textarea {
+    -webkit-user-select: text;
+    user-select: text;
   }
 
   /* One consistent, visible focus ring for keyboard users across the whole app. */
   :focus-visible {
-    @apply outline-none ring-2 ring-blue-500/70 ring-offset-2 ring-offset-white dark:ring-offset-slate-950;
+    @apply outline-none ring-2 ring-blue-500/70 ring-offset-2 ring-offset-white;
   }
 
   /* Blue-tinted selection to match the single locked accent. */
@@ -31,7 +40,7 @@
   /* Skeleton loader: shape-matching placeholder with a light sweep.
      Use <div class="skeleton h-N w-N rounded-xl" /> instead of spinners. */
   .skeleton {
-    @apply relative overflow-hidden bg-slate-200/70 dark:bg-slate-800/70;
+    @apply relative overflow-hidden bg-slate-200/70;
   }
   .skeleton::after {
     content: "";
@@ -44,13 +53,28 @@
     );
     animation: shimmer 1.6s infinite;
   }
-  .dark .skeleton::after {
-    background-image: linear-gradient(
-      90deg,
-      transparent,
-      rgb(255 255 255 / 0.06),
-      transparent
-    );
+
+  /* 水平滑動容器隱藏捲軸（手機分頁列用）：仍可滑動，只是不畫捲軸。 */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Kinetics R4: stagger entrance. Give items this class + inline
+     transition-delay, then add .in (mount effect / IntersectionObserver). */
+  .stagger-item {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .stagger-item.in {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -65,11 +89,11 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-300/80 rounded-full border-2 border-solid border-transparent bg-clip-content dark:bg-slate-700/80;
+  @apply bg-slate-300/80 rounded-full border-2 border-solid border-transparent bg-clip-content;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-400 dark:bg-slate-600;
+  @apply bg-slate-400;
 }
 
 /* Respect reduced-motion: collapse entrance/loop animations to instant. */

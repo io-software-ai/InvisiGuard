@@ -14,7 +14,7 @@ The two tracks are intentionally complementary — see [Dual-Engine Design](#dua
 - **Tiled Redundancy**: The payload is a single RS(128, 96) packet (each packet corrects up to 16 byte-errors) replicated into every 32×32-coefficient tile of LL2. Extraction fuses all tiles by soft voting, so any surviving tile can recover the message — this is what gives it cropping resilience on **all** edges, not just bottom/right.
 - **Moderate JPEG Robustness**: Survives JPEG down to ~q60–q70 in the synthetic benchmark (default `DELTA=24`). It does **not** survive geometric attacks (rotation/scaling) in blind mode, heavy re-compression, resampling, or generative (diffusion) edits.
 - **Extraction and Verification**: Two modes — extraction with the original image (adds ORB alignment before a phase/tile-origin search) and a "blind" verification mode without the original.
-- **Interactive User Interface**: A React dashboard for embedding and verifying, with side-by-side comparison and quality metric displays (PSNR, SSIM).
+- **Professional Web Platform**: A bilingual (English / Traditional Chinese) React app with four deep-linkable sub-pages (`#embed`, `#verify`, `#developers`, `#status`), side-by-side comparison with PSNR/SSIM metrics, a live system-status page, and a developers page offering both full API documentation and a one-click integration brief for AI coding agents.
 
 ## Dual-Engine Design
 
@@ -41,7 +41,7 @@ Every TrustMark embed runs a **self-check** — it immediately re-decodes the fr
 ## Tech Stack
 
 - **Backend**: Python 3.11+, FastAPI, OpenCV, PyWavelets, NumPy, reedsolo
-- **Frontend**: React 18 (Vite), Tailwind CSS, Axios
+- **Frontend**: React 18 (Vite), Tailwind CSS, Axios; self-hosted Geist type, light-only design system with spring-physics micro-interactions, bilingual i18n (EN / 繁中), hash-based routing with per-view SEO titles
 - **Classic engine**: 2-level DWT, key-derived dither QIM (DM-QIM), Reed-Solomon, tiled redundancy with cross-tile soft voting
 - **Deep-learning engine**: Adobe TrustMark (PyTorch), 61-bit ID + server-side registry
 
@@ -104,24 +104,26 @@ npm run dev
 
 ## Usage
 
-### Embed Watermark
-1.  Navigate to the **Embed Watermark** tab.
-2.  Upload an image (PNG or JPEG, at least 128×128).
-3.  Enter the text to embed (up to **92 UTF-8 bytes** — that's 92 ASCII characters or ~30 CJK characters; the UI shows a live byte counter).
-4.  Click **Embed**.
-5.  Download the watermarked image. **PNG is strongly preferred** (lossless). It also survives moderate JPEG re-compression (≈ q60+), but PNG is the safest.
+The web platform has four deep-linkable sub-pages: **Embed Watermark** (`#embed`), **Verify (Blind)** (`#verify`), **Developers** (`#developers`), and **Status** (`#status`). The browser back button works across sub-pages, and every page has its own bilingual title and description.
 
-### Extract Watermark (with Original Image)
-1.  Navigate to the **Extract (With Original)** tab.
-2.  Upload the original, unwatermarked image.
-3.  Upload the watermarked PNG image.
-4.  Click **Extract Watermark** to retrieve the embedded text.
+### Embed Watermark (`#embed`)
+1.  Upload an image (PNG or JPEG, at least 128×128).
+2.  Pick a usage scenario (social sharing / copyright proof) or choose the engine directly.
+3.  Enter the text to embed (classic: up to **92 UTF-8 bytes**, with a live byte counter; TrustMark: up to 2000 chars stored in the server registry).
+4.  Click **Embed Watermark**, review the robustness report and PSNR/SSIM metrics, then download the result. **PNG is strongly preferred** (lossless).
 
-### Verify Watermark (Blind Verification)
-1.  Navigate to the **Verify (Blind)** tab.
-2.  Upload the watermarked PNG image.
-3.  Click **Verify** to attempt extraction without the original image.
-    *Note: This mode has limitations and is not guaranteed to succeed if the image has been altered.*
+### Verify (Blind) (`#verify`)
+1.  Upload the suspect image — no original needed.
+2.  Click **Verify Watermark** to detect the mark and see confidence, watermark ID, and technical details.
+    *Note: blind mode does not correct rotation or scaling.*
+
+> The extract-with-original flow was removed from the UI; the `POST /api/v1/extract` endpoint remains available for API and CLI users who hold the original image.
+
+### Developers (`#developers`)
+Choose your path on entry: **AI agent** (one click copies a complete English integration brief covering endpoints, parameters, response schemas, the error envelope, engines, and the CLI, ready to paste into Claude, Cursor, or any coding agent) or **Documentation** (full API reference with syntax-highlighted curl / Python / JavaScript examples and an error-code table).
+
+### Status (`#status`)
+Live availability checked from your browser: overall state, per-service rows, and measured API latency, refreshed every 30 seconds.
 
 ## API Documentation
 
@@ -131,8 +133,9 @@ Interactive API documentation is available via Swagger UI and ReDoc when the bac
 - **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
 ### Endpoints
+- `GET /api/v1/health`: Liveness check (used by the in-app Status page).
 - `POST /api/v1/embed`: Embeds text into an image (form fields: `file`, `text`, `engine`, `certify`).
-- `POST /api/v1/extract`: Extracts a watermark by comparing against the original image.
+- `POST /api/v1/extract`: Extracts a watermark by comparing against the original image (API/CLI only; not exposed in the UI).
 - `POST /api/v1/verify`: Attempts to extract a watermark without the original image.
 
 ### Command-line access
@@ -220,6 +223,10 @@ python -m pytest tests            # 50 tests (unit + integration + regression)
 - **Heavy compression / resampling**: JPEG below ~q50, downscaling, and low-pass (blur) attacks overwrite the low-frequency carrier and are not recoverable.
 - **Generative edits**: like all post-hoc watermarks, diffusion-based re-generation can remove it — treat robustness as "raises the cost of removal," not a guarantee.
 - **Not cryptographic provenance**: the payload is not signed. Anyone with the key can also forge marks; for tamper-evidence you would add an HMAC/signature over the payload.
+
+## Deployment
+
+A single-origin `Dockerfile` at the repo root builds the frontend and serves it together with the API on one port (the server resolves `PORT` / `WEB_PORT` from the environment in-process, so platform start-command overrides cannot break it). For any real deployment set `WATERMARK_KEY` (required; see [Security](#security)) and `CORS_ORIGINS`, and mount persistent volumes at `backend/data/` (registry) and `backend/static/processed/` (watermarked outputs).
 
 ## License
 
